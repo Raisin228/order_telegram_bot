@@ -10,6 +10,7 @@ def func(num):
 
 func(a)
 
+
 def fact(n):
     if n == 1:
         return 1
@@ -17,3 +18,7 @@ def fact(n):
 
 
 print(fact(3))
+
+
+def new_func():
+    print('TEST')
