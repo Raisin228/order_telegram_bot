@@ -20,5 +20,13 @@ def fact(n):
 print(fact(3))
 
 
+
+class lalala:
+    ...
+
+print('вчера я изучал декораторы')
+
+
 def new_func():
     print('TEST')
+
