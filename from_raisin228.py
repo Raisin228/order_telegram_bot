@@ -1,1 +1,0 @@
-# hello Kirill i am script from Bogdan pc
