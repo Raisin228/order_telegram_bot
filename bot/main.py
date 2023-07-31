@@ -1,0 +1,1 @@
+# для ф-ии start_bot and _on_start_up
