@@ -23,7 +23,6 @@ TOKEN = os.getenv('API_KEY')
 
 def start_bot():
     """ф-ия для инициализации bot dp и запуска через executor"""
-    global bot
     my_storage = MemoryStorage()
     bot = Bot(token=TOKEN)
     dp = Dispatcher(bot, storage=my_storage)
@@ -34,7 +33,6 @@ def start_bot():
     dp.register_message_handler(admin_signin, Text(equals='Вход'), state=AdminStatesGroup.hide_field)
     dp.register_message_handler(enter_login, state=AdminStatesGroup.enter_login)
     dp.register_message_handler(enter_password, state=AdminStatesGroup.enter_password)
-
 
     # user handlers
     # команда /start для обычного пользователя
@@ -47,7 +45,13 @@ def start_bot():
     dp.register_message_handler(description_cmd, commands=['desc'])
 
     # команда для получения ближайших событий
-    dp.register_message_handler(get_events, commands=['События'])
+    dp.register_message_handler(get_events, Text(equals='Что будет?', ignore_case=True))
+
+    # команда для перехода в меню
+    dp.register_message_handler(get_menu_position, Text(equals='Меню', ignore_case=True))
+
+    # состояние выбора позиций меню
+    dp.register_message_handler(choice_position_menu, state=UserMenuStatesGroup.viewing_menu)
 
     executor.start_polling(dp, skip_updates=True)
 
