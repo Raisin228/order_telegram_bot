@@ -1,14 +1,14 @@
 # сами обработчики администратора
 from aiogram import types
 
+from order_telegram_bot.bot.config import ADM_CMD_HIDE, ADM_SIGNIN, ADM_CONF_LOG, ADM_CONF_PASS
 from order_telegram_bot.bot.handlers.admin.admi_states import AdminStatesGroup
-# from aiogram.dispatcher import FSMContext
 from order_telegram_bot.bot.keyboards.admin.replykb import *
 
 
 async def hide_command(message: types.Message) -> None:
     """Обработчик того что user зашёл в скрытое поле регистрации"""
-    await message.answer('Вы зашли в скрытое поле регистрации!', reply_markup=login_vs_signin())
+    await message.answer(ADM_CMD_HIDE, reply_markup=login_vs_signin())
     # теперь бот находится в состоянии скрытого поля регистрации
     await AdminStatesGroup.hide_field.set()
     await message.delete()
@@ -19,7 +19,7 @@ async def admin_signin(message: types.Message) -> None:
     На данном этапе пользователь находится в скрытом
     после нажатия кнопки Вход
     """
-    await message.answer('Добро пожаловать в меню входа в аккаунта администратора 🎉🎉',
+    await message.answer(ADM_SIGNIN,
                          reply_markup=ReplyKeyboardRemove())
     await message.answer('Введите Ваш логин: ')
     await AdminStatesGroup.enter_login.set()
@@ -37,7 +37,7 @@ async def enter_login(message: types.Message) -> None:
     # должен быть запрос в бд откуда я вытащу логин админа
 
     if message.text == login:
-        await message.answer('Логин успешно подтверждён!\nПожалуйста введите Ваш пароль от аккаунта администратора: ')
+        await message.answer(ADM_CONF_LOG)
         await AdminStatesGroup.enter_password.set()
     else:
         await message.answer('Ошибка неверный логин')
@@ -53,7 +53,7 @@ async def enter_password(message: types.Message) -> None:
     # должен быть запрос в бд откуда я вытащу пароль
 
     if message.text == password:
-        await message.answer('Пароль успешно подтверждён!\n Теперь Вам доступен функционал администратора')
+        await message.answer(ADM_CONF_PASS)
         await AdminStatesGroup.enter_password.set()
     else:
         await message.answer('Ошибка неверный пароль')
