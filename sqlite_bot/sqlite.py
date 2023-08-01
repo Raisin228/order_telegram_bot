@@ -1,5 +1,5 @@
-import sqlite3 as sq
 import datetime
+import sqlite3 as sq
 
 
 # создание базы данных
@@ -16,8 +16,43 @@ def db_start():
                    ' description TEXT,'
                    ' date TEXT)')
 
+    # таблица с данными об администраторах
+    cursor.execute('CREATE TABLE IF NOT EXISTS admins(admin_id INTEGER PRIMARY KEY, password TEXT, main TEXT)')
+
     # сохранение данных
     db.commit()
+
+
+async def chose_admin_password() -> str:
+    """Запрос на получение пароля 1 администратора"""
+    return cursor.execute('SELECT * FROM admins WHERE main = "YES";').fetchone()[1]
+
+
+def get_user_password(user_id: int) -> str:
+    """Запрос на получение пароля от конкретного юзера"""
+    param = cursor.execute(f'SELECT * FROM admins WHERE admin_id = {user_id}').fetchone()
+    if param is not None:
+        return param[1]
+
+
+def quantity_admins() -> int:
+    """Узнаём сколько администраторов в бд уже есть"""
+    count = cursor.execute('SELECT COUNT(*) FROM admins;').fetchone()[0]
+    return count
+
+
+async def create_admin(user_id: int, password: str) -> str:
+    """Создаём пустую ячейку в бд для конкретного админа"""
+    param = quantity_admins()
+    if cursor.execute(f'SELECT * FROM admins WHERE admin_id = {user_id}').fetchone() is None and param == 0:
+        cursor.execute('INSERT INTO admins VALUES(?, ?, ?) ', (user_id, password, 'YES'))
+        db.commit()
+        return 'OK'
+    elif cursor.execute(f'SELECT * FROM admins WHERE admin_id = {user_id}').fetchone() is None and param != 0:
+        cursor.execute('INSERT INTO admins VALUES(?, ?, ?) ', (user_id, password, 'NO'))
+        db.commit()
+        return 'OK'
+
 
 
 # шаблон для события
@@ -59,7 +94,3 @@ def week_events():
         if 0 <= count_days <= 7:
             ok_evens.append(data_event)
     return ok_evens
-
-
-
-
