@@ -1,6 +1,6 @@
 from aiogram import types
 from order_telegram_bot.bot.config import *
-from order_telegram_bot.bot.keyboards.replykb import *
+from order_telegram_bot.bot.keyboards.user.replykb import *
 from order_telegram_bot.sqlite_bot.sqlite import *
 # обработчики команд
 

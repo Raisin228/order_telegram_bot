@@ -2,11 +2,14 @@
 import os
 
 from aiogram import Bot, executor, Dispatcher
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.dispatcher.filters import Text
 from dotenv import load_dotenv
 
+
+from handlers.admin.ahandlers import *
 from handlers.user.uhandlers import *
 from order_telegram_bot.sqlite_bot.sqlite import *
-
 
 # забираем токен из .env
 load_dotenv()
@@ -18,12 +21,22 @@ TOKEN = os.getenv('API_KEY')
 #     await db_start()
 
 
-# ф-ия для инициализации bot dp и запуска через executor
 def start_bot():
+    """ф-ия для инициализации bot dp и запуска через executor"""
     global bot
+    my_storage = MemoryStorage()
     bot = Bot(token=TOKEN)
-    dp = Dispatcher(bot)
+    dp = Dispatcher(bot, storage=my_storage)
     db_start()
+
+    # admin handlers
+    dp.register_message_handler(hide_command, commands=['hide'])
+    dp.register_message_handler(admin_signin, Text(equals='Вход'), state=AdminStatesGroup.hide_field)
+    dp.register_message_handler(enter_login, state=AdminStatesGroup.enter_login)
+    dp.register_message_handler(enter_password, state=AdminStatesGroup.enter_password)
+
+
+    # user handlers
     # команда /start для обычного пользователя
     dp.register_message_handler(start_user_cmd, commands=['start'])
 
@@ -37,3 +50,4 @@ def start_bot():
     dp.register_message_handler(get_events, commands=['События'])
 
     executor.start_polling(dp, skip_updates=True)
+
