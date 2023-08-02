@@ -7,6 +7,7 @@ from order_telegram_bot.bot.config import *
 from order_telegram_bot.bot.handlers.admin.admi_states import AdminStatesGroup
 from order_telegram_bot.bot.keyboards.admin.replykb import *
 from order_telegram_bot.sqlite_bot.sqlite import quantity_admins, create_admin, chose_admin_password, get_user_password
+from order_telegram_bot.bot.keyboards.user.replykb import user_start_keyboard
 
 
 async def hide_command(message: types.Message) -> None:
@@ -63,9 +64,9 @@ async def admin_signin(message: types.Message) -> None:
 
 
 async def cancel(message: types.Message, state: FSMContext) -> None:
-    """Кнопка canel для выхода в самое главное меню"""
+    """Кнопка cancel для выхода в самое главное меню"""
     await state.finish()
-    await message.answer('Вы вышли в главное меню user', reply_markup=ReplyKeyboardRemove())
+    await message.answer('Вы вышли в главное меню user', reply_markup=user_start_keyboard())
 
 
 async def enter_password(message: types.Message, state: FSMContext) -> None:
@@ -74,7 +75,7 @@ async def enter_password(message: types.Message, state: FSMContext) -> None:
     """
     param = get_user_password(message.from_user.id)
     if param is None:
-        await message.answer(DONT_ADM)
+        await message.answer(DONT_ADM, reply_markup=cancelkb())
     elif message.text == param:
         await message.answer(ADM_CONF_PASS)
         await state.finish()

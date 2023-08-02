@@ -15,8 +15,8 @@ load_dotenv()
 TOKEN = os.getenv('API_KEY')
 
 
-# запуск базы данных(создание)
 async def on_startup(_):
+    """Запуск базы данных (создание)"""
     db_start()
 
 
@@ -25,7 +25,6 @@ def start_bot():
     my_storage = MemoryStorage()
     bot = Bot(token=TOKEN)
     dp = Dispatcher(bot, storage=my_storage)
-    db_start()
 
     # самая главная кнопка отмены
     dp.register_message_handler(cancel, Text(equals='Отмена'), state='*')
@@ -67,5 +66,17 @@ def start_bot():
 
     # состояние выбора позиций меню
     dp.register_message_handler(choice_position_menu, state=UserMenuStatesGroup.viewing_menu)
+
+    # ответ на нажатие inline кнопки
+    dp.register_callback_query_handler(callback_add_basket)
+
+    # обработчик выхода из меню (если пользователь ничего не выбрал)
+    dp.register_message_handler(back_menu_cmd, Text(equals='Вернуться', ignore_case=True))
+
+    # обработчик команды возврата в меню
+    dp.register_message_handler(back_in_menu_cmd, Text(equals='Вернуться в меню', ignore_case=True))
+
+    # обработчик выхода в корзину
+    dp.register_message_handler(viewing_basket, Text(startswith='Корзина', ignore_case=True))
 
     executor.start_polling(dp, skip_updates=True, on_startup=on_startup)
