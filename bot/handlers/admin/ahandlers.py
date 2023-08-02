@@ -23,8 +23,12 @@ async def admin_login(message: types.Message) -> None:
         await message.answer(IMAG_NEW_PASS, reply_markup=ReplyKeyboardRemove())
         await AdminStatesGroup.enter_new_password.set()
     else:
-        await message.answer(ADM_ALRADY_HAVE, reply_markup=ReplyKeyboardRemove())
-        await AdminStatesGroup.enter_pass_conf.set()
+        # перед тем как регистрировать пользователя проверяем что он ещё не админ
+        if get_user_password(message.from_user.id) is None:
+            await message.answer(ADM_ALRADY_HAVE, reply_markup=ReplyKeyboardRemove())
+            await AdminStatesGroup.enter_pass_conf.set()
+        else:
+            await message.answer(ADM_RE_REGISTR)
 
 
 async def enter_pass_conf(message: types.Message):
