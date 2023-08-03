@@ -4,7 +4,11 @@ from order_telegram_bot.sqlite_bot.sqlite import menu_positions, get_basket_data
 
 def user_start_keyboard(user_id) -> ReplyKeyboardMarkup:
     """Начальная клавиатура пользователя"""
-    price_in_basket = get_basket_data(user_id)[2]
+    try:
+        price_in_basket = get_basket_data(user_id)[2]
+    except TypeError:
+        price_in_basket = 0
+
     kb = ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
     # кнопка получения событий
     b1 = KeyboardButton('Что будет?')
@@ -43,5 +47,6 @@ def edit_basket_keyboard() -> ReplyKeyboardMarkup:
     kb = ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
     b1 = KeyboardButton('Очистить всю корзину')
     b2 = KeyboardButton('Заказать')
-    kb.add(b1, b2)
+    b3 = KeyboardButton('Вернуться')
+    kb.add(b1, b2, b3)
     return kb

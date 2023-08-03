@@ -117,6 +117,9 @@ def start_bot():
     dp.register_message_handler(back_in_menu_cmd, Text(equals='Вернуться в меню', ignore_case=True))
 
     # обработчик выхода в корзину
-    dp.register_message_handler(viewing_basket, Text(startswith='Корзина', ignore_case=True))
+    dp.register_message_handler(viewing_basket_cmd, Text(startswith='Корзина', ignore_case=True))
+
+    # обработчик очистки корзины
+    dp.register_message_handler(clear_basket_cmd, Text(equals='Очистить всю корзину', ignore_case=True))
 
     executor.start_polling(dp, skip_updates=True, on_startup=on_startup)
