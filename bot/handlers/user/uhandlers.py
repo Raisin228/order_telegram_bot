@@ -2,10 +2,10 @@ from aiogram import types
 from aiogram.dispatcher import FSMContext
 
 from order_telegram_bot.bot.config import *
-from order_telegram_bot.bot.keyboards.user.replykb import *
-from order_telegram_bot.bot.keyboards.user.inlinekb import *
-from order_telegram_bot.sqlite_bot.sqlite import *
 from order_telegram_bot.bot.handlers.user.user_states import UserMenuStatesGroup
+from order_telegram_bot.bot.keyboards.user.inlinekb import *
+from order_telegram_bot.bot.keyboards.user.replykb import *
+from order_telegram_bot.sqlite_bot.sqlite import *
 
 
 # обработчики команд пользователя
@@ -14,14 +14,8 @@ from order_telegram_bot.bot.handlers.user.user_states import UserMenuStatesGroup
 async def start_user_cmd(message: types.Message):
     """Обработчик команды /start"""
 
-<<<<<<< HEAD
     # ВРЕМЕННО
     await create_menu()
-=======
-    # # ВРЕМЕННО
-    # await create_event()
-    # await create_menu()
->>>>>>> f73d6ca8d932bc51d8088fdbffce9ba01f6cbc70
 
     await message.answer(text=START_USER_TEXT, reply_markup=user_start_keyboard(message.from_user.id))
 
@@ -100,13 +94,13 @@ async def callback_add_basket(callback: types.CallbackQuery):
     # если решили увеличить кол-во
     if data.split()[0] == '+':
         await callback.message.edit_reply_markup(reply_markup=inline_basket_keyboard(count_product=int(
-                                                                                        data.split()[1]) + 1))
+            data.split()[1]) + 1))
     # если решили уменьшить кол-во
     elif data.split()[0] == '-':
         # проверка на то, чтобы при уменьшении не уходить < 0
         if data.split()[1] != '1':
             await callback.message.edit_reply_markup(reply_markup=inline_basket_keyboard(count_product=int(
-                                                                                        data.split()[1]) - 1))
+                data.split()[1]) - 1))
         else:
             await callback.answer()
     else:
