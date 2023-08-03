@@ -13,6 +13,7 @@ def db_start():
     # таблица для событий
     cursor.execute('CREATE TABLE IF NOT EXISTS events('
                    'id INTEGER PRIMARY KEY,'
+                   ' e_name TEXT,'
                    ' photo TEXT,'
                    ' description TEXT,'
                    ' date TEXT)')
@@ -65,9 +66,9 @@ async def create_admin(user_id: int, password: str) -> str:
         return 'OK'
 
 
-async def create_event():
-    """ Шаблон для события """
-    cursor.execute('INSERT INTO events(photo, description, date) VALUES(?, ?, ?)', ('', '', ''))
+async def write_event_to_db(get_data: tuple) -> None:
+    """Записываем данные из MS in db"""
+    cursor.execute('INSERT INTO events(e_name, photo, description, date) VALUES(?, ?, ?, ?)', get_data)
     db.commit()
 
 
