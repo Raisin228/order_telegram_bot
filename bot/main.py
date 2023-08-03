@@ -1,19 +1,15 @@
 # для ф-ии start_bot and _on_start_up
-import os
 
 from aiogram import Bot, executor, Dispatcher
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters import Text
-from dotenv import load_dotenv
+from aiogram.types import ContentType
+
 
 from handlers.admin.ahandlers import *
 from handlers.user.uhandlers import *
 from order_telegram_bot.sqlite_bot.sqlite import *
 from other import my_pred
-
-# забираем токен из .env
-load_dotenv()
-TOKEN = os.getenv('API_KEY')
 
 
 async def on_startup(_):
@@ -121,5 +117,20 @@ def start_bot():
 
     # обработчик очистки корзины
     dp.register_message_handler(clear_basket_cmd, Text(equals='Очистить всю корзину', ignore_case=True))
+
+    # обработчик для оформления заказа
+    dp.register_message_handler(start_order_cmd, Text(equals='Заказать', ignore_case=True))
+
+    # обработчик команды для отмены заполнения заказа
+    dp.register_message_handler(cancel_order_cmd, Text(equals='Отменить заказ', ignore_case=True), state='*')
+
+    # обработчик состояния ввода адреса
+    dp.register_message_handler(enter_address_step, state=UserMenuStatesGroup.enter_address)
+
+    # проверка перед оплатой
+    dp.register_pre_checkout_query_handler(pre_checkout_query, lambda query: True)
+
+    # ответ на успешный платеж
+    dp.register_message_handler(successful_payment, content_types=ContentType.SUCCESSFUL_PAYMENT)
 
     executor.start_polling(dp, skip_updates=True, on_startup=on_startup)

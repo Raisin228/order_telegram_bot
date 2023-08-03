@@ -50,3 +50,20 @@ def edit_basket_keyboard() -> ReplyKeyboardMarkup:
     b3 = KeyboardButton('Вернуться')
     kb.add(b1, b2, b3)
     return kb
+
+
+def user_order_keyboard() -> ReplyKeyboardMarkup:
+    """Клавиатура для оформления заказа"""
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    b1 = KeyboardButton('Оплатить')
+    b2 = KeyboardButton('Отменить заказ')
+    kb.add(b1, b2)
+    return kb
+
+
+def user_order_cancel() -> ReplyKeyboardMarkup:
+    """Клавиатура для отмены заказа"""
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    button = KeyboardButton('Отменить заказ')
+    kb.add(button)
+    return kb

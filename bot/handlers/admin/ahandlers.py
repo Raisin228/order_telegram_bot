@@ -153,7 +153,7 @@ async def show_ads(message: types.Message, state: FSMContext) -> None:
 
 
 async def change_ads(message: types.Message) -> None:
-    """Если пользователю что то не понравилось в объявлении возвращаем его на этап создания"""
+    """Если пользователю что-то не понравилось в объявлении возвращаем его на этап создания"""
     await message.answer(
         'Предупреждение! Сейчас будет повторный процесс заполнения данных. '
         'Всё прошлые данные мероприятия будут утеряны. Сохраните их!', reply_markup=ReplyKeyboardRemove())

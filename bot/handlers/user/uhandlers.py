@@ -2,12 +2,21 @@ import aiogram.utils.exceptions
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 
+from geopy.geocoders import Nominatim
+
+import os
+from dotenv import load_dotenv
+
 from order_telegram_bot.bot.config import *
 from order_telegram_bot.bot.handlers.user.user_states import UserMenuStatesGroup
 from order_telegram_bot.bot.keyboards.user.inlinekb import *
 from order_telegram_bot.bot.keyboards.user.replykb import *
 from order_telegram_bot.sqlite_bot.sqlite import *
 
+# забираем токены из .env
+load_dotenv()
+TOKEN = os.getenv('API_KEY')
+PAY_TOKEN = os.getenv('PAY_TOKEN')
 
 # обработчики команд пользователя
 
@@ -16,7 +25,7 @@ async def start_user_cmd(message: types.Message):
     """Обработчик команды /start"""
 
     # ВРЕМЕННО
-    # await create_menu()
+    await create_menu()
 
     await message.answer(text=START_USER_TEXT, reply_markup=user_start_keyboard(message.from_user.id))
 
@@ -99,7 +108,8 @@ async def callback_add_basket(callback: types.CallbackQuery):
         if data.split()[1] == '-':
             product_data = add_basket(callback.from_user.id, data.split()[2], type_add='-')
             try:
-                await callback.message.edit_reply_markup(reply_markup=inline_product_keyboard(product_data=product_data))
+                await callback.message.edit_reply_markup(
+                    reply_markup=inline_product_keyboard(product_data=product_data))
             except aiogram.utils.exceptions.MessageNotModified:
                 await callback.answer()
     else:
@@ -158,3 +168,83 @@ async def clear_basket_cmd(message: types.Message):
         await message.answer(text='Ваша корзина уже пуста', reply_markup=user_start_keyboard(message.from_user.id))
     else:
         await message.answer(text='Ваша корзина очищена', reply_markup=user_start_keyboard(message.from_user.id))
+
+
+async def cancel_order_cmd(message: types.Message, state: FSMContext):
+    """Отмена заполнения заказа"""
+    await message.answer(text='Заказ отменен', reply_markup=edit_basket_keyboard())
+    await state.finish()
+
+
+async def start_order_cmd(message: types.Message):
+    """Обработчик команды для оформления заказа"""
+    await UserMenuStatesGroup.enter_address.set()
+    await message.answer(text='Введите адрес для доставки', reply_markup=user_order_cancel())
+
+
+async def enter_address_step(message: types.Message, state: FSMContext):
+    """Обработчик ввода адреса для доставки"""
+    # проверка адреса на корректность
+    check = check_address(message.text)
+    if not check:
+        write_address(message.from_user.id, message.text)
+        await state.finish()
+        # формирование сообщения с итоговым заказом
+        order_str = str()
+        basket_data = get_basket_data(message.from_user.id)
+
+        # словарь для получения информации о продуктах и их кол-ве
+        products = dict()
+        for product in basket_data[1].split(','):
+            if product in products.keys():
+                products[product][0] += 1
+            else:
+                products[product] = [1, menu_positions()[product][2]]
+
+        # добавление информации о продуктах в итоговое сообщение
+        for product in products:
+            order_str += f'{product} - {products[product][0]}шт - {products[product][1]}руб.\n'
+        # добавление информации об адресе
+        order_str += f'Адрес доставки:\n{message.text}\n'
+        # цена
+        price = types.LabeledPrice(label='Оплата заказа', amount=basket_data[2] * 100)
+        # отправка информации о заказе
+        await message.bot.send_invoice(message.from_user.id,
+                                       title='Ваш Заказ',
+                                       description=order_str,
+                                       provider_token=PAY_TOKEN,
+                                       currency='rub',
+                                       prices=[price],
+                                       start_parameter='order_pay',
+                                       payload=order_str)
+    else:
+        await message.answer(text='Неверно введен адрес! Попробуйте еще раз')
+        await UserMenuStatesGroup.enter_address.set()
+
+
+async def pre_checkout_query(pre_checkout_q: types.PreCheckoutQuery):
+    """Проверка для осуществления оплаты"""
+    await pre_checkout_q.bot.answer_pre_checkout_query(pre_checkout_q.id, ok=True)
+
+
+async def successful_payment(message: types.Message):
+    """Обработчик успешного платежа"""
+    payment_info = message.successful_payment.to_python()
+    # сообщение об успешной оплате для пользователя
+    await message.answer(text=f'Заказ на сумму {message.successful_payment.total_amount // 100}'
+                              f'{message.successful_payment.currency} успешно оплачен! Ожидайте!',
+                         reply_markup=user_start_keyboard(message.from_user.id))
+
+    # сообщение об успешной оплате для главного админа
+    await message.bot.send_message(chat_id=get_admin_id(), text=f'@{message.from_user.username} сделал заказ!\n'
+                                                                f'{payment_info["invoice_payload"]}')
+
+
+def check_address(address):
+    """Функция для проверки адреса"""
+    address_check = Nominatim(user_agent='check_address')
+    location = address_check.geocode(address)
+    if location is None:
+        return -1
+    else:
+        return 0

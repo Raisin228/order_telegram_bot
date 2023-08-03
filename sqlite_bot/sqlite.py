@@ -30,7 +30,11 @@ def db_start():
                    ' price INTEGER)')
 
     # таблица для корзины
-    cursor.execute('CREATE TABLE IF NOT EXISTS basket(user_id INTEGER PRIMARY KEY, product TEXT, total_price INTEGER)')
+    cursor.execute('CREATE TABLE IF NOT EXISTS basket('
+                   'user_id INTEGER PRIMARY KEY,'
+                   ' product TEXT,'
+                   ' total_price INTEGER,'
+                   ' address TEXT)')
     # сохранение данных
     db.commit()
 
@@ -45,6 +49,12 @@ def get_user_password(user_id: int) -> str:
     param = cursor.execute(f'SELECT * FROM admins WHERE admin_id = {user_id}').fetchone()
     if param is not None:
         return param[1]
+
+
+def get_admin_id():
+    """Запрос на получение id главного админа"""
+    admin_id = int(cursor.execute('SELECT admin_id FROM admins WHERE main = "YES"').fetchone()[0])
+    return admin_id
 
 
 def quantity_admins() -> int:
@@ -148,18 +158,15 @@ def add_basket(user_id, product_title, type_add='+'):
         # удаление продукта из корзины
         elif type_add == '-':
             products = user[1].split(',')
-            print(products)
 
             # пытаемся удалить продукт, если он еще есть
             try:
                 products.remove(product_title)
             except ValueError:
-                print('test')
                 return [product_title, 0]
 
             # формируем новый список продуктов
             new_product_str = ','.join(products)
-            print(new_product_str)
             # обновляем БД
             cursor.execute('UPDATE basket SET product="{}", total_price="{}" WHERE user_id = "{}"'.format(
                 new_product_str,
@@ -196,3 +203,9 @@ def clear_basket(user_id):
 
     db.commit()
     return 0
+
+
+def write_address(user_id, address):
+    """Добавление в БД адреса доставки пользователя"""
+    cursor.execute('UPDATE basket SET address="{}" WHERE user_id="{}"'.format(address, user_id))
+    db.commit()
