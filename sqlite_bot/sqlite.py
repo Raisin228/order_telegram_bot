@@ -29,6 +29,8 @@ def db_start():
                    ' description TEXT,'
                    ' price INTEGER)')
 
+    # таблица для корзины
+    cursor.execute('CREATE TABLE IF NOT EXISTS basket(user_id INTEGER PRIMARY KEY, product TEXT, total_price INTEGER)')
     # сохранение данных
     db.commit()
 
@@ -110,3 +112,36 @@ def menu_positions():
     for i in menu_list:
         menu_dict[i[2]] = [i[1], i[3], i[4]]
     return menu_dict
+
+
+def add_basket(user_id, product_title):
+    """Добавление продукта в корзину"""
+    user = cursor.execute('SELECT * FROM basket WHERE user_id=={key}'.format(key=user_id)).fetchone()
+
+    # цена выбранного продукта
+    product_price = menu_positions()[product_title][2]
+
+    if not user:
+        # если у пользователя еще нет корзины
+        cursor.execute('INSERT INTO basket(user_id, product, total_price) VALUES(?, ?, ?)',
+                       (user_id, product_title, product_price))
+        db.commit()
+    else:
+        # если корзина уже существует
+        cursor.execute('UPDATE basket SET product="{}", total_price="{}" WHERE user_id = "{}"'.format(
+            user[1] + ',' + product_title,
+            user[2] + product_price,
+            user_id
+        ))
+        db.commit()
+
+
+def get_basket_data(user_id):
+    """Получение данных о корзине пользователя"""
+    user_data = cursor.execute('SELECT * FROM basket WHERE user_id=={key}'.format(key=user_id)).fetchone()
+
+    # отправка данных
+    if user_data:
+        return user_data
+    else:
+        return 0

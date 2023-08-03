@@ -7,8 +7,8 @@ from order_telegram_bot.bot.config import *
 from order_telegram_bot.bot.handlers.admin.admi_states import AdminStatesGroup
 from order_telegram_bot.bot.keyboards.admin.replykb import *
 from order_telegram_bot.bot.main import bot
-from order_telegram_bot.sqlite_bot.sqlite import quantity_admins, create_admin, \
-    chose_admin_password, get_user_password, write_event_to_db
+from order_telegram_bot.sqlite_bot.sqlite import quantity_admins, create_admin, chose_admin_password, get_user_password
+from order_telegram_bot.sqlite_bot.sqlite import write_event_to_db
 
 
 async def cancel(message: types.Message, state: FSMContext) -> None:
@@ -73,7 +73,7 @@ async def enter_password(message: types.Message) -> None:
     """
     param = get_user_password(message.from_user.id)
     if param is None:
-        await message.answer(DONT_ADM)
+        await message.answer(DONT_ADM, reply_markup=cancelkb())
     elif message.text == param:
         await message.answer(ADM_CONF_PASS)
         # переводим админа в состояние панели админа + прикрепляем kb
