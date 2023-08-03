@@ -72,6 +72,19 @@ async def write_event_to_db(get_data: tuple) -> None:
     db.commit()
 
 
+async def get_events_from_db() -> list[tuple]:
+    """Запрос на сбор информации о кол-ве событий в бд"""
+    # в data лежит либо список кортежей (id, e_name) либо пустой список []
+    data = cursor.execute('SELECT id, e_name, date FROM events;').fetchall()
+    return data
+
+
+async def del_event_in_db(d: list[str, str, str]) -> None:
+    """Удалили мероприятие которое попросил пользователь"""
+    cursor.execute(f'DELETE FROM events WHERE id = {d[0]};')
+    db.commit()
+
+
 async def create_menu():
     """Шаблон для элемента меню"""
     cursor.execute('INSERT INTO menu(photo, title, description, price) VALUES(?, ?, ?, ?)', ('', '', '', 0))

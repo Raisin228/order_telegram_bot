@@ -33,3 +33,9 @@ class AdminStatesGroup(StatesGroup):
     # подтверждение созданного события
     ads_confirmation = State()
 
+    # редактирование событий
+    edit_advs = State()
+
+    # выбор нужного события
+    choose_edit_advs = State()
+

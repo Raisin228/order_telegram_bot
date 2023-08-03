@@ -31,8 +31,8 @@ def start_bot():
     dp = Dispatcher(bot, storage=my_storage)
 
     # самая главная кнопка отмены
-    dp.register_message_handler(cancel, Text(equals='Отмена'), state='*')
-
+    dp.register_message_handler(cancel, lambda m: m.text in ['Отмена', 'Выйти из админ.панели'], state='*')
+    dp.register_message_handler(in_main_menu, Text(equals='В главное меню'), state='*')
     # =======================admin handlers=======================
 
     """Всё что касается регистрации и входа"""
@@ -54,7 +54,7 @@ def start_bot():
     # ввод пароля
     dp.register_message_handler(enter_password, state=AdminStatesGroup.enter_password)
 
-    """События"""
+    """Создание новых событий"""
     # начало создание события
     dp.register_message_handler(adm_create_event, Text(equals='Создать мероприятие'),
                                 state=AdminStatesGroup.adm_control_panel)
@@ -87,6 +87,20 @@ def start_bot():
 
     # записали событие в бд
     dp.register_message_handler(add_ads_to_db, Text(equals='Просто шикарно!!'), state=AdminStatesGroup.ads_confirmation)
+
+    """Изменение уже существующих событий"""
+    # начало изменения события
+    dp.register_message_handler(list_events_to_edit, Text(equals='Изменить календарь мероприятий'),
+                                state=AdminStatesGroup.adm_control_panel)
+    # редактируем|удаляем|отмена
+    dp.register_message_handler(action_with_adv, state=AdminStatesGroup.choose_edit_advs)
+
+    # перебрасываем пользователя на редактирование
+    dp.register_message_handler(edit_exist_adv, Text(equals='Изменить'), state=AdminStatesGroup.edit_advs)
+
+    # удаляем выбранный пост из бд
+    dp.register_message_handler(permanent_del, Text(equals='Удалить'), state=AdminStatesGroup.edit_advs)
+
 
     # =======================user handlers=======================
     # команда /start для обычного пользователя

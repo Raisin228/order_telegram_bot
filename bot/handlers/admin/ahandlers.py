@@ -7,14 +7,21 @@ from order_telegram_bot.bot.config import *
 from order_telegram_bot.bot.handlers.admin.admi_states import AdminStatesGroup
 from order_telegram_bot.bot.keyboards.admin.replykb import *
 from order_telegram_bot.bot.main import bot
-from order_telegram_bot.sqlite_bot.sqlite import quantity_admins, create_admin, chose_admin_password, get_user_password
+from order_telegram_bot.sqlite_bot.sqlite import quantity_admins, create_admin, \
+    chose_admin_password, get_user_password, get_events_from_db, del_event_in_db
 from order_telegram_bot.sqlite_bot.sqlite import write_event_to_db
 
 
 async def cancel(message: types.Message, state: FSMContext) -> None:
-    """Кнопка canel для выхода в самое главное меню"""
+    """Кнопка canel для выхода в самое главное меню user"""
     await state.finish()
     await message.answer('Вы вышли в главное меню user', reply_markup=ReplyKeyboardRemove())
+
+
+async def in_main_menu(message: types.Message) -> None:
+    """Выход в гл. меню админа"""
+    await AdminStatesGroup.adm_control_panel.set()
+    await message.answer('Вы вышли в главное меню admin', reply_markup=adm_opportunities())
 
 
 async def hide_command(message: types.Message) -> None:
@@ -170,4 +177,56 @@ async def add_ads_to_db(message: types.Message, state: FSMContext) -> None:
     await write_event_to_db(tuple([data['e_name'], data['e_photo'], data['e_descript'], data['e_date']]))
     await message.answer('Отлично данные успешно записаны в бд!\nПеревожу в гл.меню', reply_markup=adm_opportunities())
     # перевели в главное меню админа
+    await AdminStatesGroup.adm_control_panel.set()
+
+
+async def list_events_to_edit(message: types.Message):
+    """Редактирование уже созданных событий"""
+    await message.answer('В данном разделе можно редактировать уже созданные события')
+
+    # нужен запрос к бд для проверки на существование событий
+    # если их нет то отсылаем админа в гл меню
+    db_records = await get_events_from_db()
+    if not db_records:
+        await message.answer('Пока ещё не создано не одно мероприятие. Для начала нужно его создать!')
+    else:
+        await message.answer('Вот список мероприятий которые уже созданы формат(id|Название|Дата). Выберите нужное...',
+                             reply_markup=view_events(db_records))
+        await AdminStatesGroup.choose_edit_advs.set()
+
+
+async def action_with_adv(message: types.Message, state: FSMContext) -> None:
+    """Выбор действия Удаление поста/ изменение"""
+    # записываем название и дату события которое будем удалять на след. шаге
+    async with state.proxy() as data:
+        data['delite_e'] = message.text.split()
+    await message.answer('Отлично! Что будем делать?', reply_markup=del_or_edit())
+    await AdminStatesGroup.edit_advs.set()
+
+
+async def edit_exist_adv(message: types.Message, state: FSMContext) -> None:
+    """Редактирование сущ.событий"""
+
+    # удалили старое событие
+    # заходим в MS и смотрим id/name/date мероприятия для удаления
+    async with state.proxy() as data:
+        need_d_for_del = data['delite_e']
+    # удаление из бд
+    await del_event_in_db(need_d_for_del)
+    # и создаём новое
+    await message.answer('Сейчас будет предложено ввести новые данные приготовьтесь\nВведите название мероприятия:',
+                         reply_markup=ReplyKeyboardRemove())
+    await AdminStatesGroup.e_name.set()
+
+
+async def permanent_del(message: types.Message, state: FSMContext) -> None:
+    """Действия для удаления поста"""
+
+    # заходим в MS и смотрим id/name/date мероприятия для удаления
+    async with state.proxy() as data:
+        need_d_for_del = data['delite_e']
+    # удаление из бд
+    await del_event_in_db(need_d_for_del)
+
+    await message.answer('Событие успешно удалено', reply_markup=adm_opportunities())
     await AdminStatesGroup.adm_control_panel.set()
