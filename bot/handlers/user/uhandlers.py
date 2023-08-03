@@ -12,7 +12,6 @@ async def start_user_cmd(message: types.Message):
     """Обработчик команды /start"""
 
     # ВРЕМЕННО
-    await create_event()
     await create_menu()
 
     await message.answer(text=START_USER_TEXT, reply_markup=user_start_keyboard())

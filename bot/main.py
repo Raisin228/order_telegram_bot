@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from handlers.admin.ahandlers import *
 from handlers.user.uhandlers import *
 from order_telegram_bot.sqlite_bot.sqlite import *
+from other import my_pred
 
 # забираем токен из .env
 load_dotenv()
@@ -20,17 +21,20 @@ async def on_startup(_):
     db_start()
 
 
+bot = Bot(token=TOKEN)
+
+
 def start_bot():
     """ф-ия для инициализации bot dp и запуска через executor"""
+    global bot
     my_storage = MemoryStorage()
-    bot = Bot(token=TOKEN)
     dp = Dispatcher(bot, storage=my_storage)
-    db_start()
-
     # самая главная кнопка отмены
     dp.register_message_handler(cancel, Text(equals='Отмена'), state='*')
 
     # =======================admin handlers=======================
+
+    """Всё что касается регистрации и входа"""
     # вход в скрытое поле
     dp.register_message_handler(hide_command, commands=['hide'])
 
@@ -48,6 +52,40 @@ def start_bot():
 
     # ввод пароля
     dp.register_message_handler(enter_password, state=AdminStatesGroup.enter_password)
+
+    """События"""
+    # начало создание события
+    dp.register_message_handler(adm_create_event, Text(equals='Создать мероприятие'),
+                                state=AdminStatesGroup.adm_control_panel)
+
+    # название + проверяем на корректность
+    dp.register_message_handler(get_name_of_event, content_types=types.ContentType.TEXT, state=AdminStatesGroup.e_name)
+    dp.register_message_handler(is_correct_name, content_types=types.ContentType.ANY, state=AdminStatesGroup.e_name)
+
+    # дата + проверяем на корректность
+    dp.register_message_handler(get_date_of_event, lambda mes: my_pred(mes.text),
+                                content_types=types.ContentType.TEXT,  state=AdminStatesGroup.e_date)
+    dp.register_message_handler(is_correct_date, content_types=types.ContentType.ANY,
+                                state=AdminStatesGroup.e_date)
+
+    # описание + проверяем на корректность
+    dp.register_message_handler(get_descript_event, state=AdminStatesGroup.e_descript,
+                                content_types=types.ContentType.TEXT)
+    dp.register_message_handler(is_correct_desc, content_types=types.ContentType.ANY, state=AdminStatesGroup.e_descript)
+
+    # получение фотки + проверка
+    dp.register_message_handler(get_photo_event, state=AdminStatesGroup.e_photo, content_types=['photo'])
+    dp.register_message_handler(is_correct_photo, content_types=types.ContentType.ANY, state=AdminStatesGroup.e_photo)
+
+    # подтверждение правильно собранной анкеты
+    dp.register_message_handler(show_ads, Text(equals='Показать анкету'), state=AdminStatesGroup.ads_confirmation)
+
+    # в случае если пользователь решил внести изменения
+    dp.register_message_handler(change_ads, Text(equals='Хочу переделать :('),
+                                state=AdminStatesGroup.ads_confirmation)
+
+    # записали событие в бд
+    dp.register_message_handler(add_ads_to_db, Text(equals='Просто шикарно!!'), state=AdminStatesGroup.ads_confirmation)
 
     # =======================user handlers=======================
     # команда /start для обычного пользователя
