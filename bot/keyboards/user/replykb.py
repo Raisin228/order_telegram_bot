@@ -67,3 +67,14 @@ def user_order_cancel() -> ReplyKeyboardMarkup:
     button = KeyboardButton('Отменить заказ')
     kb.add(button)
     return kb
+
+
+def user_payment_keyboard() -> ReplyKeyboardMarkup:
+    """Клавиатура для выбора способа оплаты"""
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    b1 = KeyboardButton('Картой')
+    b2 = KeyboardButton('Наличными')
+    b3 = KeyboardButton('Отменить заказ')
+    kb.row(b1, b2)
+    kb.add(b3)
+    return kb

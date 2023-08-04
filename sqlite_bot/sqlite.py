@@ -180,10 +180,18 @@ def add_basket(user_id, product_title, type_add='+'):
 
 def get_basket_data(user_id):
     """Получение данных о корзине пользователя"""
-    user_data = cursor.execute('SELECT * FROM basket WHERE user_id=={key}'.format(key=user_id)).fetchone()
+    user_data = list(cursor.execute('SELECT * FROM basket WHERE user_id=={key}'.format(key=user_id)).fetchone())
 
     # отправка данных
     if user_data:
+        # приводим список продуктов в удобный вид
+        products = dict()
+        for product in user_data[1].split(','):
+            if product in products.keys():
+                products[product][0] += 1
+            else:
+                products[product] = [1, menu_positions()[product][2]]
+        user_data[1] = products
         return user_data
     else:
         return 0
@@ -195,11 +203,7 @@ def clear_basket(user_id):
 
     if not user:
         return -1
-    cursor.execute('UPDATE basket SET product="{}", total_price="{}" WHERE user_id = "{}"'.format(
-        '',
-        0,
-        user_id
-    ))
+    cursor.execute('UPDATE basket SET product="{}", total_price="{}" WHERE user_id = "{}"'.format('', 0, user_id))
 
     db.commit()
     return 0

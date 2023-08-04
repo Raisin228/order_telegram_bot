@@ -9,4 +9,4 @@ class UserMenuStatesGroup(StatesGroup):
 
     # состояние для оформления заказа
     enter_address = State()
-
+    choice_payment = State()

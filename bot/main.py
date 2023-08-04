@@ -127,6 +127,9 @@ def start_bot():
     # обработчик состояния ввода адреса
     dp.register_message_handler(enter_address_step, state=UserMenuStatesGroup.enter_address)
 
+    # обработчик для выбора способа оплаты
+    dp.register_message_handler(payment, state=UserMenuStatesGroup.choice_payment)
+
     # проверка перед оплатой
     dp.register_pre_checkout_query_handler(pre_checkout_query, lambda query: True)
 
