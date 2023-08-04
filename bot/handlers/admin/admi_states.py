@@ -30,6 +30,9 @@ class AdminStatesGroup(StatesGroup):
     # получаем фото события
     e_photo = State()
 
+    # получаем ссылку
+    get_link = State()
+
     # подтверждение созданного события
     ads_confirmation = State()
 

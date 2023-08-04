@@ -5,6 +5,7 @@ from aiogram.types import ReplyKeyboardRemove
 
 from order_telegram_bot.bot.config import *
 from order_telegram_bot.bot.handlers.admin.admi_states import AdminStatesGroup
+from order_telegram_bot.bot.keyboards.admin.inlinekb import link_in_button_adv
 from order_telegram_bot.bot.keyboards.admin.replykb import *
 from order_telegram_bot.bot.main import bot
 from order_telegram_bot.sqlite_bot.sqlite import quantity_admins, create_admin, \
@@ -92,8 +93,7 @@ async def enter_password(message: types.Message) -> None:
 
 async def adm_create_event(message: types.Message) -> None:
     """Только что пользователь нажал на кнопку создать мероприятие"""
-    await message.answer(CREATE_NEW_ADV,
-                         reply_markup=ReplyKeyboardRemove())
+    await message.answer(CREATE_NEW_ADV, reply_markup=exit_kb())
     await message.answer('Введите название мероприятия:')
     await AdminStatesGroup.e_name.set()
 
@@ -146,6 +146,33 @@ async def get_photo_event(message: types.Message, state: FSMContext) -> None:
     """Получаем фото события"""
     async with state.proxy() as data:
         data['e_photo'] = message.photo[0].file_id
+    await message.answer('Можете передать мне ссылку на сторонние сайты, приложения или "-" '
+                         'если хотите пропустить этот этап...')
+    await AdminStatesGroup.get_link.set()
+
+
+async def dont_need_link(message: types.Message, state: FSMContext) -> None:
+    """Не нужна ссылка переходим на показ составленной анкеты"""
+    # сделали запись о ненадобности ссылки
+    async with state.proxy() as data:
+        data['link'] = '-'
+    await message.answer('Хорошо у данного объявления не будет ссылки на сторонние сервисы'
+                         'Остался последний шаг) Подтвердите правильность заполненных данных',
+                         reply_markup=adm_get_do_post())
+    await AdminStatesGroup.ads_confirmation.set()
+
+
+async def is_correct_link(message: types.Message) -> None:
+    """Обработчик неправильной ссылки"""
+    await message.answer('Ссылка не корректная!!!')
+
+
+async def get_link_to_social_networks(message: types.Message, state: FSMContext) -> None:
+    """Запрашиваем ссылку на событие (будем выдавать в виде inlint kb)"""
+
+    # записали ссылку в MS
+    async with state.proxy() as data:
+        data['link'] = message.text
     await message.answer(LAST_STEP_ADV, reply_markup=adm_get_do_post())
     await AdminStatesGroup.ads_confirmation.set()
 
@@ -154,9 +181,16 @@ async def show_ads(message: types.Message, state: FSMContext) -> None:
     """Показываем анкету с только что введёнными данными"""
     async with state.proxy() as user_data:
         data = user_data
-    await bot.send_photo(chat_id=message.from_user.id, photo=data['e_photo'],
-                         caption=f'Название события - {data["e_name"]}\nДата: {data["e_date"]}\nОписание: '
-                                 f'{data["e_descript"]}', reply_markup=right_anket())
+    # показываем без ссылки если её нет
+    if data['link'] == '-':
+        await bot.send_photo(chat_id=message.from_user.id, photo=data['e_photo'],
+                             caption=f'Название события - {data["e_name"]}\nДата: {data["e_date"]}\nОписание: '
+                                     f'{data["e_descript"]}', reply_markup=right_anket())
+    else:
+        await bot.send_photo(chat_id=message.from_user.id, photo=data['e_photo'],
+                             caption=f'Название события - {data["e_name"]}\nДата: {data["e_date"]}\nОписание: '
+                                     f'{data["e_descript"]}', reply_markup=link_in_button_adv(data['link']))
+        await message.answer('Вам нравится анкета?', reply_markup=right_anket())
 
 
 async def change_ads(message: types.Message) -> None:
@@ -174,7 +208,7 @@ async def add_ads_to_db(message: types.Message, state: FSMContext) -> None:
     async with state.proxy() as user_data:
         data = user_data
     # записали в бд
-    await write_event_to_db(tuple([data['e_name'], data['e_photo'], data['e_descript'], data['e_date']]))
+    await write_event_to_db(tuple([data['e_name'], data['e_photo'], data['e_descript'], data['e_date'], data['link']]))
     await message.answer('Отлично данные успешно записаны в бд!\nПеревожу в гл.меню', reply_markup=adm_opportunities())
     # перевели в главное меню админа
     await AdminStatesGroup.adm_control_panel.set()

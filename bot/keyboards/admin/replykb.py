@@ -2,6 +2,13 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 
+def exit_kb() -> ReplyKeyboardMarkup:
+    """выход в главное меню admin"""
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    kb.add(KeyboardButton('В главное меню'))
+    return kb
+
+
 def cancelkb() -> ReplyKeyboardMarkup:
     """Сброс в самое главное меню"""
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
@@ -44,6 +51,7 @@ def right_anket() -> ReplyKeyboardMarkup:
     button1 = KeyboardButton('Просто шикарно!!')
     button2 = KeyboardButton('Хочу переделать :(')
     kb.add(button1, button2)
+    kb.add(KeyboardButton('В главное меню'))
     return kb
 
 

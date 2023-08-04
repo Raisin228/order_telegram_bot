@@ -1,5 +1,6 @@
 # для всяких мелких побочных ф-ий
 from datetime import datetime
+import re
 
 
 def my_pred(s: str) -> bool:
@@ -24,3 +25,10 @@ def my_pred(s: str) -> bool:
     else:
         flag = False
     return flag
+
+
+def is_good_link(s: str) -> bool:
+    """Ф-ия для проверки корректности введённой admin ссылки"""
+    # Регулярное выражение для проверки ссылки
+    url_pattern = re.compile(r'^https?://\S+$')
+    return True if url_pattern.match(s) else False

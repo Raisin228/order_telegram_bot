@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 from handlers.admin.ahandlers import *
 from handlers.user.uhandlers import *
 from order_telegram_bot.sqlite_bot.sqlite import *
-from other import my_pred
+from other import my_pred, is_good_link
 
 # забираем токен из .env
 load_dotenv()
@@ -77,6 +77,14 @@ def start_bot():
     # получение фотки + проверка
     dp.register_message_handler(get_photo_event, state=AdminStatesGroup.e_photo, content_types=['photo'])
     dp.register_message_handler(is_correct_photo, content_types=types.ContentType.ANY, state=AdminStatesGroup.e_photo)
+
+    # если не нужна ссылка пропускаем данный этап
+    dp.register_message_handler(dont_need_link, Text(equals='-'), state=AdminStatesGroup.get_link)
+    # иначе получаем ссылку + минимальная проверка на корректность
+    dp.register_message_handler(get_link_to_social_networks, lambda m: is_good_link(m.text),
+                                content_types=types.ContentType.TEXT, state=AdminStatesGroup.get_link)
+    dp.register_message_handler(is_correct_link, content_types=types.ContentType.ANY, state=AdminStatesGroup.get_link)
+
 
     # подтверждение правильно собранной анкеты
     dp.register_message_handler(show_ads, Text(equals='Показать анкету'), state=AdminStatesGroup.ads_confirmation)
