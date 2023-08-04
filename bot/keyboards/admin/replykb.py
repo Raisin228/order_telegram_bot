@@ -31,22 +31,22 @@ def adm_opportunities() -> ReplyKeyboardMarkup:
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
     button1 = KeyboardButton('Создать мероприятие')
     button2 = KeyboardButton('Изменить календарь мероприятий')
-    button3 = KeyboardButton('Меню бургеров')
+    button3 = KeyboardButton('Бургеры')
     button4 = KeyboardButton('Выйти из админ.панели')
     kb.add(button1).add(button2, button3).add(button4)
     return kb
 
 
-def adm_get_do_post() -> ReplyKeyboardMarkup:
-    """Клавиатура для получения только что заполненных данных объявления"""
+def get_do_post(text: str) -> ReplyKeyboardMarkup:
+    """Клавиатура для получения только что заполненных данных объявления/товара"""
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
-    button1 = KeyboardButton('Показать анкету')
+    button1 = KeyboardButton(text)
     kb.add(button1)
     return kb
 
 
 def right_anket() -> ReplyKeyboardMarkup:
-    """Подтверждение правильно введённой анкеты"""
+    """Подтверждение правильно введённых данных"""
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
     button1 = KeyboardButton('Просто шикарно!!')
     button2 = KeyboardButton('Хочу переделать :(')
@@ -56,7 +56,7 @@ def right_anket() -> ReplyKeyboardMarkup:
 
 
 def view_events(data: list) -> ReplyKeyboardMarkup:
-    """Показать кнопки с названиями мероприятий"""
+    """Показать кнопки с названиями мероприятий/товаров"""
     kb = ReplyKeyboardMarkup()
     # делаем очень много кнопок со всеми событиями
     for i in data:
@@ -74,3 +74,12 @@ def del_or_edit() -> ReplyKeyboardMarkup:
     but3 = KeyboardButton('В главное меню')
     kb.add(but1, but2).add(but3)
     return kb
+
+
+def new_prod_or_edit_exist() -> ReplyKeyboardMarkup:
+    """Редактирование/ добавление товаров в меню"""
+    return ReplyKeyboardMarkup(resize_keyboard=True).add(KeyboardButton('Добавить новый вид бургеров'),
+                                                         KeyboardButton('Редактировать текущее меню')).add(
+        KeyboardButton('В главное меню'))
+
+

@@ -61,7 +61,8 @@ def start_bot():
 
     # название + проверяем на корректность
     dp.register_message_handler(get_name_of_event, content_types=types.ContentType.TEXT, state=AdminStatesGroup.e_name)
-    dp.register_message_handler(is_correct_name, content_types=types.ContentType.ANY, state=AdminStatesGroup.e_name)
+    dp.register_message_handler(is_correct_name, content_types=types.ContentType.ANY,
+                                state=AdminStatesGroup.e_name)
 
     # дата + проверяем на корректность
     dp.register_message_handler(get_date_of_event, lambda mes: my_pred(mes.text),
@@ -75,8 +76,8 @@ def start_bot():
     dp.register_message_handler(is_correct_desc, content_types=types.ContentType.ANY, state=AdminStatesGroup.e_descript)
 
     # получение фотки + проверка
-    dp.register_message_handler(get_photo_event, state=AdminStatesGroup.e_photo, content_types=['photo'])
-    dp.register_message_handler(is_correct_photo, content_types=types.ContentType.ANY, state=AdminStatesGroup.e_photo)
+    dp.register_message_handler(get_photo_event, state=AdminStatesGroup.get_photo, content_types=['photo'])
+    dp.register_message_handler(is_correct_photo, content_types=types.ContentType.ANY, state=AdminStatesGroup.get_photo)
 
     # если не нужна ссылка пропускаем данный этап
     dp.register_message_handler(dont_need_link, Text(equals='-'), state=AdminStatesGroup.get_link)
@@ -84,7 +85,6 @@ def start_bot():
     dp.register_message_handler(get_link_to_social_networks, lambda m: is_good_link(m.text),
                                 content_types=types.ContentType.TEXT, state=AdminStatesGroup.get_link)
     dp.register_message_handler(is_correct_link, content_types=types.ContentType.ANY, state=AdminStatesGroup.get_link)
-
 
     # подтверждение правильно собранной анкеты
     dp.register_message_handler(show_ads, Text(equals='Показать анкету'), state=AdminStatesGroup.ads_confirmation)
@@ -109,6 +109,60 @@ def start_bot():
     # удаляем выбранный пост из бд
     dp.register_message_handler(permanent_del, Text(equals='Удалить'), state=AdminStatesGroup.edit_advs)
 
+    """Бургеры"""
+    # попадаем в ветку бургеров
+    dp.register_message_handler(burgers_menu, Text(equals='Бургеры'), state=AdminStatesGroup.adm_control_panel)
+
+    # начинаем добавление
+    dp.register_message_handler(add_new_product, Text(equals='Добавить новый вид бургеров'),
+                                state=AdminStatesGroup.burgers_menu)
+
+    # название товара + проверка данных
+    dp.register_message_handler(get_name_burger, state=AdminStatesGroup.name_new_product)
+    dp.register_message_handler(is_correct_name, content_types=types.ContentType.ANY,
+                                state=AdminStatesGroup.name_new_product)
+
+    # фото еды + проверка
+    dp.register_message_handler(get_burger_photo, state=AdminStatesGroup.get_photo_dish, content_types=['photo'])
+    dp.register_message_handler(is_correct_photo, content_types=types.ContentType.ANY,
+                                state=AdminStatesGroup.get_photo_dish)
+
+    # описание еды + проверка на корректность
+    dp.register_message_handler(get_descript_dish, state=AdminStatesGroup.dish_descript,
+                                content_types=types.ContentType.TEXT)
+    dp.register_message_handler(is_correct_desc, content_types=types.ContentType.ANY,
+                                state=AdminStatesGroup.dish_descript)
+
+    # устанавливаем цену на товар + проверка
+    dp.register_message_handler(price, lambda m: all(map(str.isdigit, m.text)), state=AdminStatesGroup.dish_price,
+                                content_types=types.ContentType.TEXT)
+    dp.register_message_handler(is_correct_price, content_types=types.ContentType.ANY,
+                                state=AdminStatesGroup.dish_price)
+
+    # подтверждение правильно собранной фото карточки
+    dp.register_message_handler(show_dish, Text(equals='Показать фото-карточку товара'),
+                                state=AdminStatesGroup.dish_confirmation)
+
+    # в случае если пользователь решил внести изменения
+    dp.register_message_handler(change_dish, Text(equals='Хочу переделать :('),
+                                state=AdminStatesGroup.dish_confirmation)
+
+    # записали новый товар в бд
+    dp.register_message_handler(add_dish_to_db, Text(equals='Просто шикарно!!'),
+                                state=AdminStatesGroup.dish_confirmation)
+
+    """Изменение товаров в меню"""
+    # начало изменения события
+    dp.register_message_handler(list_dishes_to_edit, Text(equals='Редактировать текущее меню'),
+                                state=AdminStatesGroup.burgers_menu)
+    # редактируем|удаляем|отмена
+    dp.register_message_handler(action_with_dish, state=AdminStatesGroup.choose_edit_dish)
+
+    # перебрасываем пользователя на редактирование
+    dp.register_message_handler(edit_exist_dish, Text(equals='Изменить'), state=AdminStatesGroup.edit_dish)
+
+    # удаляем выбранный пост из бд
+    dp.register_message_handler(permanent_del_dish, Text(equals='Удалить'), state=AdminStatesGroup.edit_dish)
 
     # =======================user handlers=======================
     # команда /start для обычного пользователя

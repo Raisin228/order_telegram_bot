@@ -75,7 +75,7 @@ async def write_event_to_db(get_data: tuple) -> None:
 
 async def get_events_from_db() -> list[tuple]:
     """Запрос на сбор информации о кол-ве событий в бд"""
-    # в data лежит либо список кортежей (id, e_name) либо пустой список []
+    # в data лежит либо список кортежей (id, e_name, date) либо пустой список []
     data = cursor.execute('SELECT id, e_name, date FROM events;').fetchall()
     return data
 
@@ -86,9 +86,22 @@ async def del_event_in_db(d: list[str, str, str]) -> None:
     db.commit()
 
 
-async def create_menu():
-    """Шаблон для элемента меню"""
-    cursor.execute('INSERT INTO menu(photo, title, description, price) VALUES(?, ?, ?, ?)', ('', '', '', 0))
+async def get_dishes_from_db() -> list[tuple]:
+    """Запрос на сбор информации о кол-ве товаров в меню"""
+    # в data лежит либо список кортежей (id, title, price) либо пустой список []
+    data = cursor.execute('SELECT id, title, price FROM menu;').fetchall()
+    return data
+
+
+async def del_dish_in_db(d: list[str, str, str]) -> None:
+    """Удалили товар который попросил пользователь"""
+    cursor.execute(f'DELETE FROM menu WHERE id = {d[0]};')
+    db.commit()
+
+
+async def create_menu(get_d: tuple) -> None:
+    """Добавление нового товара в бд"""
+    cursor.execute('INSERT INTO menu(photo, title, description, price) VALUES(?, ?, ?, ?)', get_d)
     db.commit()
 
 
