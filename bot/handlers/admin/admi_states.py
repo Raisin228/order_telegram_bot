@@ -27,9 +27,41 @@ class AdminStatesGroup(StatesGroup):
     # ожидаем описание мероприятия
     e_descript = State()
 
-    # получаем фото события
-    e_photo = State()
+    # получаем фото
+    get_photo = State()
+
+    # получаем ссылку
+    get_link = State()
 
     # подтверждение созданного события
     ads_confirmation = State()
 
+    # редактирование событий
+    edit_advs = State()
+
+    # выбор нужного события
+    choose_edit_advs = State()
+
+    # меню бургеров
+    burgers_menu = State()
+
+    # ввод названия нового товара
+    name_new_product = State()
+
+    # фотка еды
+    get_photo_dish = State()
+
+    # описание товара
+    dish_descript = State()
+
+    # цена товара
+    dish_price = State()
+
+    # подтверждение правильно собранной карточки
+    dish_confirmation = State()
+
+    # выбор товара для редактирования
+    choose_edit_dish = State()
+
+    # редактирование блюда (Удаление/Изменение)
+    edit_dish = State()

@@ -1,5 +1,7 @@
 # для всяких мелких побочных ф-ий
+import re
 from datetime import datetime
+
 import requests
 
 
@@ -11,11 +13,25 @@ def my_pred(s: str) -> bool:
         u_date = datetime(int(n_s[2]), int(n_s[1]), int(n_s[0]))
     except Exception:
         return False
-    # проверяем ещё и на emoji
-    is_past = datetime.today().day <= u_date.day and \
-              datetime.today().month <= u_date.month and datetime.today().year <= u_date.year
-    if is_past and u_date.year <= datetime.today().year + 3:
-        return True
+
+    flag = True
+    # проверка что дата актуальная
+    if datetime.today().year <= u_date.year <= datetime.today().year + 3:
+        ...
+    elif datetime.today().month <= u_date.month:
+        ...
+    elif datetime.today().day <= u_date.day:
+        ...
+    else:
+        flag = False
+    return flag
+
+
+def is_good_link(s: str) -> bool:
+    """Ф-ия для проверки корректности введённой admin ссылки"""
+    # Регулярное выражение для проверки ссылки
+    url_pattern = re.compile(r'^https?://\S+$')
+    return True if url_pattern.match(s) else False
 
 
 def check_address(address, token):

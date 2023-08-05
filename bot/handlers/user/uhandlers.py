@@ -25,9 +25,6 @@ GEO_TOKEN = os.getenv('YANDEX_GEO_TOKEN')
 async def start_user_cmd(message: types.Message):
     """Обработчик команды /start"""
 
-    # ВРЕМЕННО
-    await create_menu()
-
     await message.answer(text=START_USER_TEXT, reply_markup=user_start_keyboard(message.from_user.id))
 
 
