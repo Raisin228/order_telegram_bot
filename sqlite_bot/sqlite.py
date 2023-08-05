@@ -31,7 +31,11 @@ def db_start():
                    ' price INTEGER)')
 
     # таблица для корзины
-    cursor.execute('CREATE TABLE IF NOT EXISTS basket(user_id INTEGER PRIMARY KEY, product TEXT, total_price INTEGER)')
+    cursor.execute('CREATE TABLE IF NOT EXISTS basket('
+                   'user_id INTEGER PRIMARY KEY,'
+                   ' product TEXT,'
+                   ' total_price INTEGER,'
+                   ' address TEXT)')
     # сохранение данных
     db.commit()
 
@@ -46,6 +50,12 @@ def get_user_password(user_id: int) -> str:
     param = cursor.execute(f'SELECT * FROM admins WHERE admin_id = {user_id}').fetchone()
     if param is not None:
         return param[1]
+
+
+def get_admin_id():
+    """Запрос на получение id главного админа"""
+    admin_id = int(cursor.execute('SELECT admin_id FROM admins WHERE main = "YES"').fetchone()[0])
+    return admin_id
 
 
 def quantity_admins() -> int:
@@ -119,7 +129,7 @@ def week_events():
     for event_id in events_id:
         data_event = cursor.execute('SELECT * FROM events WHERE id == {key}'.format(key=event_id[0])).fetchone()
         # объект с датой события
-        date_obj = datetime.datetime.strptime(data_event[3], '%d.%m.%Y')
+        date_obj = datetime.datetime.strptime(data_event[4], '%d.%m.%Y')
         # разница в днях
         count_days = (date_obj - now_date).days
         # подходящие берем
@@ -141,7 +151,7 @@ def menu_positions():
     return menu_dict
 
 
-def add_basket(user_id, product_title):
+def add_basket(user_id, product_title, type_add='+'):
     """Добавление продукта в корзину"""
     user = cursor.execute('SELECT * FROM basket WHERE user_id=={key}'.format(key=user_id)).fetchone()
 
@@ -149,26 +159,84 @@ def add_basket(user_id, product_title):
     product_price = menu_positions()[product_title][2]
 
     if not user:
-        # если у пользователя еще нет корзины
-        cursor.execute('INSERT INTO basket(user_id, product, total_price) VALUES(?, ?, ?)',
-                       (user_id, product_title, product_price))
-        db.commit()
+        if type_add == '+':
+            # если у пользователя еще нет корзины
+            cursor.execute('INSERT INTO basket(user_id, product, total_price) VALUES(?, ?, ?)',
+                           (user_id, product_title, product_price))
+            db.commit()
+        return [product_title, 1]
     else:
-        # если корзина уже существует
-        cursor.execute('UPDATE basket SET product="{}", total_price="{}" WHERE user_id = "{}"'.format(
-            user[1] + ',' + product_title,
-            user[2] + product_price,
-            user_id
-        ))
-        db.commit()
+        if type_add == '+':
+            if user[1]:
+                products_str = user[1] + ',' + product_title
+            else:
+                products_str = product_title
+            # если корзина уже существует
+            cursor.execute('UPDATE basket SET product="{}", total_price="{}" WHERE user_id = "{}"'.format(
+                products_str,
+                user[2] + product_price,
+                user_id
+            ))
+            db.commit()
+            count_product = products_str.split(',').count(product_title)
+            # возвращаем список [название продукта, его кол-во]
+            return [product_title, count_product]
+
+        # удаление продукта из корзины
+        elif type_add == '-':
+            products = user[1].split(',')
+
+            # пытаемся удалить продукт, если он еще есть
+            try:
+                products.remove(product_title)
+            except ValueError:
+                return [product_title, 0]
+
+            # формируем новый список продуктов
+            new_product_str = ','.join(products)
+            # обновляем БД
+            cursor.execute('UPDATE basket SET product="{}", total_price="{}" WHERE user_id = "{}"'.format(
+                new_product_str,
+                user[2] - product_price,
+                user_id
+            ))
+            db.commit()
+            # возвращаем список [название продукта, его кол-во]
+            return [product_title, products.count(product_title)]
 
 
 def get_basket_data(user_id):
     """Получение данных о корзине пользователя"""
-    user_data = cursor.execute('SELECT * FROM basket WHERE user_id=={key}'.format(key=user_id)).fetchone()
+    user_data = list(cursor.execute('SELECT * FROM basket WHERE user_id=={key}'.format(key=user_id)).fetchone())
 
     # отправка данных
     if user_data:
+        # приводим список продуктов в удобный вид
+        products = dict()
+        for product in user_data[1].split(','):
+            if product in products.keys():
+                products[product][0] += 1
+            else:
+                products[product] = [1, menu_positions()[product][2]]
+        user_data[1] = products
         return user_data
     else:
         return 0
+
+
+def clear_basket(user_id):
+    """Очистка строки с данными корзины"""
+    user = cursor.execute('SELECT * FROM basket WHERE user_id=={key}'.format(key=user_id)).fetchone()
+
+    if not user:
+        return -1
+    cursor.execute('UPDATE basket SET product="{}", total_price="{}" WHERE user_id = "{}"'.format('', 0, user_id))
+
+    db.commit()
+    return 0
+
+
+def write_address(user_id, address):
+    """Добавление в БД адреса доставки пользователя"""
+    cursor.execute('UPDATE basket SET address="{}" WHERE user_id="{}"'.format(address, user_id))
+    db.commit()

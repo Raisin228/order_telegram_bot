@@ -1,6 +1,8 @@
 # для всяких мелких побочных ф-ий
-from datetime import datetime
 import re
+from datetime import datetime
+
+import requests
 
 
 def my_pred(s: str) -> bool:
@@ -30,3 +32,22 @@ def is_good_link(s: str) -> bool:
     # Регулярное выражение для проверки ссылки
     url_pattern = re.compile(r'^https?://\S+$')
     return True if url_pattern.match(s) else False
+
+
+def check_address(address, token):
+    """Функция для проверки адреса через Yandex API Geocoder"""
+    params = {
+        "apikey": token,
+        "format": "json",
+        "lang": "ru_RU",
+        "kind": "house",
+        "geocode": address
+    }
+    response = requests.get(url="https://geocode-maps.yandex.ru/1.x/", params=params)
+    data = response.json()
+    ch = data['response']['GeoObjectCollection']['featureMember'][0]['GeoObject']['metaDataProperty'][
+        'GeocoderMetaData']['kind']
+    if ch == 'house':
+        return 0
+    else:
+        return -1

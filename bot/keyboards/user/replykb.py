@@ -4,7 +4,11 @@ from order_telegram_bot.sqlite_bot.sqlite import menu_positions, get_basket_data
 
 def user_start_keyboard(user_id) -> ReplyKeyboardMarkup:
     """Начальная клавиатура пользователя"""
-    price_in_basket = get_basket_data(user_id)[2]
+    try:
+        price_in_basket = get_basket_data(user_id)[2]
+    except TypeError:
+        price_in_basket = 0
+
     kb = ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
     # кнопка получения событий
     b1 = KeyboardButton('Что будет?')
@@ -43,5 +47,34 @@ def edit_basket_keyboard() -> ReplyKeyboardMarkup:
     kb = ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
     b1 = KeyboardButton('Очистить всю корзину')
     b2 = KeyboardButton('Заказать')
+    b3 = KeyboardButton('Вернуться')
+    kb.add(b1, b2, b3)
+    return kb
+
+
+def user_order_keyboard() -> ReplyKeyboardMarkup:
+    """Клавиатура для оформления заказа"""
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    b1 = KeyboardButton('Оплатить')
+    b2 = KeyboardButton('Отменить заказ')
     kb.add(b1, b2)
+    return kb
+
+
+def user_order_cancel() -> ReplyKeyboardMarkup:
+    """Клавиатура для отмены заказа"""
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    button = KeyboardButton('Отменить заказ')
+    kb.add(button)
+    return kb
+
+
+def user_payment_keyboard() -> ReplyKeyboardMarkup:
+    """Клавиатура для выбора способа оплаты"""
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    b1 = KeyboardButton('Картой')
+    b2 = KeyboardButton('Наличными')
+    b3 = KeyboardButton('Отменить заказ')
+    kb.row(b1, b2)
+    kb.add(b3)
     return kb

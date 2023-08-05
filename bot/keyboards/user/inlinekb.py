@@ -12,3 +12,14 @@ def inline_basket_keyboard(count_product=1) -> InlineKeyboardMarkup:
     ikb.row(ib_1, ib_2, ib_3)
     ikb.add(ib_4)
     return ikb
+
+
+def inline_product_keyboard(product_data) -> InlineKeyboardMarkup:
+    """Клавиатура для редактирования кол-ва продукта в корзине"""
+    ikb = InlineKeyboardMarkup()
+
+    ib_1 = InlineKeyboardButton(text='+', callback_data=f'B + {product_data[0]}')
+    ib_2 = InlineKeyboardButton(text=f'{product_data[1]}', callback_data='1')
+    ib_3 = InlineKeyboardButton(text='-', callback_data=f'B - {product_data[0]}')
+    ikb.add(ib_1, ib_2, ib_3)
+    return ikb
