@@ -14,13 +14,11 @@ def my_pred(s: str) -> bool:
 
     flag = True
     # проверка что дата актуальная
-    if datetime.today().year <= u_date.year:
+    if datetime.today().year <= u_date.year <= datetime.today().year + 3:
         ...
     elif datetime.today().month <= u_date.month:
         ...
     elif datetime.today().day <= u_date.day:
-        ...
-    elif u_date.year <= datetime.today().year + 3:
         ...
     else:
         flag = False

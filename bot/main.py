@@ -52,7 +52,15 @@ def start_bot():
     dp.register_message_handler(admin_signin, Text(equals='Вход'), state=AdminStatesGroup.hide_field)
 
     # ввод пароля
-    dp.register_message_handler(enter_password, state=AdminStatesGroup.enter_password)
+    dp.register_message_handler(enter_password, content_types=types.ContentType.TEXT,
+                                state=AdminStatesGroup.enter_password)
+
+    # обработчики неверных данных
+    dp.register_message_handler(dont_correct, content_types=types.ContentType.ANY,
+                                state=AdminStatesGroup.hide_field)
+    dp.register_message_handler(dont_correct_password, content_types=types.ContentType.ANY,
+                                state=[AdminStatesGroup.enter_password, AdminStatesGroup.enter_new_password,
+                                       AdminStatesGroup.enter_pass_conf])
 
     """Создание новых событий"""
     # начало создание события
@@ -95,6 +103,10 @@ def start_bot():
 
     # записали событие в бд
     dp.register_message_handler(add_ads_to_db, Text(equals='Просто шикарно!!'), state=AdminStatesGroup.ads_confirmation)
+
+    # защита от дурака
+    dp.register_message_handler(dont_correct, content_types=types.ContentType.ANY,
+                                state=AdminStatesGroup.ads_confirmation)
 
     """Изменение уже существующих событий"""
     # начало изменения события

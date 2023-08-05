@@ -29,6 +29,15 @@ async def in_main_menu(message: types.Message) -> None:
 """Вход и регистрация"""
 
 
+async def dont_correct(message: types.Message) -> None:
+    """Говорим админу то что он ввёл не правильные данные на этапе hide_fiels"""
+    await message.answer('Вы ввели неверные данные. Вам нужно нажать на кнопку!')
+
+
+async def dont_correct_password(message: types.Message) -> None:
+    """Говорим админу то что он ввёл не правильные данные на этапе enter_password"""
+    await message.answer('Пароль может быть представлен только в виде текста/emoji')
+
 async def hide_command(message: types.Message) -> None:
     """Обработчик того что user зашёл в скрытое поле регистрации"""
     await message.answer(ADM_CMD_HIDE, reply_markup=login_vs_signin())
