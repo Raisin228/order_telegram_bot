@@ -1,14 +1,17 @@
+import os
+from random import choice
+
 import aiogram.utils.exceptions
+from aiogram import Bot
 from aiogram import types
 from aiogram.dispatcher import FSMContext
-
-import os
 from dotenv import load_dotenv
 
 from order_telegram_bot.bot.config import *
 from order_telegram_bot.bot.handlers.user.user_states import UserMenuStatesGroup
 from order_telegram_bot.bot.keyboards.user.inlinekb import *
 from order_telegram_bot.bot.keyboards.user.replykb import *
+
 from order_telegram_bot.sqlite_bot.sqlite import *
 from order_telegram_bot.bot.other import *
 
@@ -17,6 +20,7 @@ load_dotenv()
 TOKEN = os.getenv('API_KEY')
 PAY_TOKEN = os.getenv('PAY_TOKEN')
 GEO_TOKEN = os.getenv('YANDEX_GEO_TOKEN')
+bot = Bot(token=TOKEN)
 
 
 # обработчики команд пользователя
@@ -24,26 +28,27 @@ GEO_TOKEN = os.getenv('YANDEX_GEO_TOKEN')
 
 async def start_user_cmd(message: types.Message):
     """Обработчик команды /start"""
-    await message.answer(text=START_USER_TEXT, reply_markup=user_start_keyboard(message.from_user.id))
+    await bot.send_sticker(message.chat.id, 'CAACAgIAAxkBAAEJ7ytkz0X-9bZnxbLmTShkDPl8bl-UtQAC2A8AAkjyYEsV-8TaeHRrmC8E')
+    await message.answer(text=START_USER_TEXT, parse_mode='html',
 
 
 async def help_user_cmd(message: types.Message):
     """Обработчик команды /help"""
-    await message.answer(text=HELP_USER_TEXT)
+    await message.answer(text=HELP_USER_TEXT, parse_mode='html')
 
 
 async def description_cmd(message: types.Message):
     """Обработчик команды /desk(описание бота)"""
-    await message.answer(text=DESCRIPTION_USER)
+    await message.answer(text=DESCRIPTION_USER, parse_mode='html')
 
 
 async def get_events(message: types.Message):
     """Обработчик команды 'Что будет?' для получения событий на ближайшие 7 дней"""
     data_events = week_events()
     if data_events:
-        await message.answer(text='Вот все мероприятия на ближайшие 7 дней!')
+        await message.answer(text=EVENTS_7DAYS, parse_mode='html')
     else:
-        await message.answer(text='Событий пока нет, но они обязательно появятся!')
+        await message.answer(text=NO_EVENTS)
     # вывод событий
     for i in data_events:
         if i[5] == '-':
@@ -57,7 +62,7 @@ async def get_menu_position(message: types.Message, state: FSMContext):
     """Отправка пользователю карточки меню"""
     if menu_positions():
         await UserMenuStatesGroup.viewing_menu.set()
-        await message.answer(text='Выберите понравившийся бургер, чтобы узнать о нем подробнее!',
+        await message.answer(text=CHOOSE_BURGER,
                              reply_markup=user_menu_keyboard())
     else:
         await message.answer(text='В меню пока ничего нет', reply_markup=user_start_keyboard(message.from_user.id))
@@ -68,7 +73,7 @@ async def choice_position_menu(message: types.Message, state: FSMContext):
     """Пользователь выбирает позицию меню"""
 
     # действия при нажатии кнопки выхода
-    if message.text.lower() == 'вернуться':
+    if message.text.lower() == '⬅️ вернуться':
         await state.finish()
         await message.answer(text='Вы в главном меню!', reply_markup=user_start_keyboard(message.from_user.id))
     else:
@@ -77,11 +82,12 @@ async def choice_position_menu(message: types.Message, state: FSMContext):
         menu_dict = menu_positions()
 
         await message.delete()
+                         
         try:
-            await message.answer(text='Хороший выбор!', reply_markup=user_menu_position())
-            await message.answer_photo(menu_dict[message.text][0], caption=f'{message.text}\n'
-                                                                           f'{menu_dict[message.text][1]}\n'
-                                                                           f'Стоимость: {menu_dict[message.text][2]}',
+            await message.answer(text='Хороший выбор!👍', reply_markup=user_menu_position())
+            await message.answer_photo(menu_dict[message.text][0], caption=f'<b>Название:</b> {message.text}\n'
+                                      f'<b>Описание:</b>{menu_dict[message.text][1]}\n'
+                                      f'<b>Стоимость:</b> {menu_dict[message.text][2]}', parse_mode='html',
                                        reply_markup=inline_basket_keyboard())
         except KeyError:
             await message.answer(text='Такого блюда у нас нет(')
@@ -95,7 +101,7 @@ async def back_menu_cmd(message: types.Message):
 async def back_in_menu_cmd(message: types.Message):
     """Обработчик возврата в продуктовое меню"""
     await UserMenuStatesGroup.viewing_menu.set()
-    await message.answer(text='Вы в меню доставки!', reply_markup=user_menu_keyboard())
+    await message.answer(text='Вы находитесь в меню наших бургеров!', reply_markup=user_menu_keyboard())
 
 
 async def callback_add_basket(callback: types.CallbackQuery):
@@ -190,7 +196,7 @@ async def start_order_cmd(message: types.Message):
             await message.answer(text='Введите адрес для доставки', reply_markup=user_order_cancel())
             await UserMenuStatesGroup.enter_address.set()
     else:
-        await message.answer(text='Невозможно сделать заказ, пока ваша корзина пуста',
+        await message.answer(text=IMPOSSIBLE_TO_ORDER,
                              reply_markup=user_start_keyboard(message.from_user.id))
 
 
@@ -224,7 +230,7 @@ async def enter_address_step(message: types.Message):
             await UserMenuStatesGroup.user_phone.set()
 
     else:
-        await message.answer(text='Неверно введен адрес! Попробуйте еще раз')
+        await message.answer(text=DONT_CORRECT_ADDRES)
         await UserMenuStatesGroup.enter_address.set()
 
 
@@ -265,7 +271,7 @@ async def payment(message: types.Message, state: FSMContext):
     # добавление информации об адресе
     order_str += f'Адрес доставки:\n{basket_data[3]}\n'
 
-    if message.text.lower() == 'картой':
+    if message.text.lower() == '💳 картой':
         await state.finish()
 
         # цена
@@ -280,12 +286,12 @@ async def payment(message: types.Message, state: FSMContext):
                                            currency='rub',
                                            prices=[price],
                                            start_parameter='order_pay',
-                                           payload=f'order_from_user_{message.from_user.id}')
+                                           payload=f'111')
         except aiogram.utils.exceptions.BadRequest:
             await message.answer(text='Ошибка оформления заказа! Попробуйте изменить адрес доставки')
             await UserMenuStatesGroup.enter_address.set()
 
-    elif message.text.lower() == 'наличными':
+    elif message.text.lower() == '💵 наличными':
         order_str += f'\nИтог: {basket_data[2]}RUB'
         await message.answer(text='Заказ оформлен!')
         # очистка корзины при успешной оплате
@@ -296,7 +302,7 @@ async def payment(message: types.Message, state: FSMContext):
                                                                     f'Номер: {basket_data[4]}')
         await state.finish()
     else:
-        await message.answer('Неверно выбран способ оплаты, напишите картой или наличными')
+        await message.answer(DONT_CORRECT_PAYMENT)
         await UserMenuStatesGroup.choice_payment.set()
 
 
@@ -333,6 +339,11 @@ async def successful_payment(message: types.Message):
                                                                 f' {basket_data[4]}')
 
 
-async def unidentified_cmd(message: types.Message):
-    """Обработчик неизвестных команд"""
-    await message.answer(text='Я вас не понял, используйте /help для получения инструкции')
+async def send_sticker(message: types.Message):
+    """Отправляет случайный стикер пользователю в ответ на стикер"""
+    await bot.send_sticker(message.chat.id, choice(list_stickers))
+
+
+async def dont_understend(message: types.Message):
+    """Заглушка на случай если пользователь ответил то что мы не предусмотрели"""
+    await message.answer('Извините я Вас не понял 😥')
