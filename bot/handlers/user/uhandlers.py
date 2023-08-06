@@ -30,6 +30,7 @@ async def start_user_cmd(message: types.Message):
     """Обработчик команды /start"""
     await bot.send_sticker(message.chat.id, 'CAACAgIAAxkBAAEJ7ytkz0X-9bZnxbLmTShkDPl8bl-UtQAC2A8AAkjyYEsV-8TaeHRrmC8E')
     await message.answer(text=START_USER_TEXT, parse_mode='html',
+                         reply_markup=user_start_keyboard(message.from_user.id))
 
 
 async def help_user_cmd(message: types.Message):
@@ -86,8 +87,8 @@ async def choice_position_menu(message: types.Message, state: FSMContext):
         try:
             await message.answer(text='Хороший выбор!👍', reply_markup=user_menu_position())
             await message.answer_photo(menu_dict[message.text][0], caption=f'<b>Название:</b> {message.text}\n'
-                                      f'<b>Описание:</b>{menu_dict[message.text][1]}\n'
-                                      f'<b>Стоимость:</b> {menu_dict[message.text][2]}', parse_mode='html',
+                                       f'<b>Описание:</b>{menu_dict[message.text][1]}\n'
+                                       f'<b>Стоимость:</b> {menu_dict[message.text][2]}', parse_mode='html',
                                        reply_markup=inline_basket_keyboard())
         except KeyError:
             await message.answer(text='Такого блюда у нас нет(')
@@ -193,7 +194,7 @@ async def start_order_cmd(message: types.Message):
             await message.answer(text=f'Оставить прежний адрес?\n{check_basket[3]}', reply_markup=choice_keyboard())
             await UserMenuStatesGroup.choice_address.set()
         else:
-            await message.answer(text='Введите адрес для доставки', reply_markup=user_order_cancel())
+            await message.answer(text=ADDRESS, reply_markup=user_order_cancel())
             await UserMenuStatesGroup.enter_address.set()
     else:
         await message.answer(text=IMPOSSIBLE_TO_ORDER,
@@ -208,8 +209,7 @@ async def address(message: types.Message):
             await message.answer(text=f'Это ваш номер телефона: {bd_num_phone}?', reply_markup=choice_keyboard())
             await UserMenuStatesGroup.choice_phone.set()
     else:
-        await message.answer(text='Введите адрес для доставки, например, Тутаев, улица Волжская Набережная 19,'
-                                  ' квартира 1',
+        await message.answer(text=ADDRESS,
                              reply_markup=user_order_cancel())
         await UserMenuStatesGroup.enter_address.set()
 
@@ -230,7 +230,7 @@ async def enter_address_step(message: types.Message):
             await UserMenuStatesGroup.user_phone.set()
 
     else:
-        await message.answer(text=DONT_CORRECT_ADDRES)
+        await message.answer(text=DONT_CORRECT_ADDRESS)
         await UserMenuStatesGroup.enter_address.set()
 
 

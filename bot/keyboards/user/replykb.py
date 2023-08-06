@@ -56,7 +56,7 @@ def user_order_keyboard() -> ReplyKeyboardMarkup:
     """Клавиатура для оформления заказа"""
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
     b1 = KeyboardButton('Оплатить')
-    b2 = KeyboardButton('Отменить заказ')
+    b2 = KeyboardButton('❌ Отменить заказ')
     kb.add(b1, b2)
     return kb
 
@@ -85,7 +85,7 @@ def choice_keyboard() -> ReplyKeyboardMarkup:
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
     b1 = KeyboardButton('Да')
     b2 = KeyboardButton('Нет')
-    b3 = KeyboardButton('Отменить заказ')
+    b3 = KeyboardButton('❌ Отменить заказ')
     kb.row(b1, b2)
     kb.add(b3)
     return kb
