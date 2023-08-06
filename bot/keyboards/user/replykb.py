@@ -11,9 +11,9 @@ def user_start_keyboard(user_id) -> ReplyKeyboardMarkup:
 
     kb = ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
     # кнопка получения событий
-    b1 = KeyboardButton('Что будет?')
-    b2 = KeyboardButton('Меню')
-    b3 = KeyboardButton(f'Корзина {price_in_basket}руб.')
+    b1 = KeyboardButton('📑 Список ближайших мероприятий')
+    b2 = KeyboardButton('📕 Меню')
+    b3 = KeyboardButton(f'🛍 Корзина {price_in_basket}руб.')
 
     kb.add(b1, b2, b3)
 
@@ -23,7 +23,7 @@ def user_start_keyboard(user_id) -> ReplyKeyboardMarkup:
 def user_menu_keyboard() -> ReplyKeyboardMarkup:
     """Клавиатура со списком продуктов"""
     kb = ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
-    back_button = KeyboardButton('Вернуться')
+    back_button = KeyboardButton('⬅️ Вернуться')
 
     # получаем все названия продуктов меню
     menu_list = menu_positions().keys()
@@ -37,7 +37,7 @@ def user_menu_keyboard() -> ReplyKeyboardMarkup:
 def user_menu_position() -> ReplyKeyboardMarkup:
     """Кнопка для возврата в меню"""
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
-    back_menu_bt = KeyboardButton('Вернуться в меню')
+    back_menu_bt = KeyboardButton('⬅️ Вернуться в меню')
     kb.add(back_menu_bt)
     return kb
 
@@ -45,9 +45,9 @@ def user_menu_position() -> ReplyKeyboardMarkup:
 def edit_basket_keyboard() -> ReplyKeyboardMarkup:
     """Клавиатура для редактирования всей корзины"""
     kb = ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
-    b1 = KeyboardButton('Очистить всю корзину')
-    b2 = KeyboardButton('Заказать')
-    b3 = KeyboardButton('Вернуться')
+    b1 = KeyboardButton('🗑 Очистить всю корзину')
+    b2 = KeyboardButton('🎁 Заказать')
+    b3 = KeyboardButton('⬅️ Вернуться')
     kb.add(b1, b2, b3)
     return kb
 
@@ -64,7 +64,7 @@ def user_order_keyboard() -> ReplyKeyboardMarkup:
 def user_order_cancel() -> ReplyKeyboardMarkup:
     """Клавиатура для отмены заказа"""
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
-    button = KeyboardButton('Отменить заказ')
+    button = KeyboardButton('❌ Отменить заказ')
     kb.add(button)
     return kb
 
@@ -72,9 +72,9 @@ def user_order_cancel() -> ReplyKeyboardMarkup:
 def user_payment_keyboard() -> ReplyKeyboardMarkup:
     """Клавиатура для выбора способа оплаты"""
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
-    b1 = KeyboardButton('Картой')
-    b2 = KeyboardButton('Наличными')
-    b3 = KeyboardButton('Отменить заказ')
+    b1 = KeyboardButton('💳 Картой')
+    b2 = KeyboardButton('💵 Наличными')
+    b3 = KeyboardButton('❌ Отменить заказ')
     kb.row(b1, b2)
     kb.add(b3)
     return kb
