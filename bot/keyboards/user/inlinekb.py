@@ -6,7 +6,7 @@ def inline_basket_keyboard(count_product=1) -> InlineKeyboardMarkup:
     ikb = InlineKeyboardMarkup()
 
     ib_1 = InlineKeyboardButton(text='+', callback_data=f'+ {count_product}')
-    ib_2 = InlineKeyboardButton(text=f'{count_product}', callback_data='1')
+    ib_2 = InlineKeyboardButton(text=f'{count_product}', callback_data='count')
     ib_3 = InlineKeyboardButton(text='-', callback_data=f'- {count_product}')
     ib_4 = InlineKeyboardButton(text='В корзину', callback_data=f'{count_product}')
     ikb.row(ib_1, ib_2, ib_3)
@@ -19,7 +19,15 @@ def inline_product_keyboard(product_data) -> InlineKeyboardMarkup:
     ikb = InlineKeyboardMarkup()
 
     ib_1 = InlineKeyboardButton(text='+', callback_data=f'B + {product_data[0]}')
-    ib_2 = InlineKeyboardButton(text=f'{product_data[1]}', callback_data='1')
+    ib_2 = InlineKeyboardButton(text=f'{product_data[1]}', callback_data='count')
     ib_3 = InlineKeyboardButton(text='-', callback_data=f'B - {product_data[0]}')
     ikb.add(ib_1, ib_2, ib_3)
+    return ikb
+
+
+def inline_event_keyboard(link) -> InlineKeyboardMarkup:
+    """Кнопка для ссылок на события"""
+    ikb = InlineKeyboardMarkup()
+    ib = InlineKeyboardButton(text='Подробнее', url=link)
+    ikb.add(ib)
     return ikb

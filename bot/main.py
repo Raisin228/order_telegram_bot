@@ -215,6 +215,15 @@ def start_bot():
     # обработчик состояния ввода адреса
     dp.register_message_handler(enter_address_step, state=UserMenuStatesGroup.enter_address)
 
+    # обработчик состояния выбора адреса
+    dp.register_message_handler(address, state=UserMenuStatesGroup.choice_address)
+
+    # обработчик состояния выбора номера телефона
+    dp.register_message_handler(phone, state=UserMenuStatesGroup.choice_phone)
+
+    # Обработчик состояния ввода номера телефона
+    dp.register_message_handler(get_user_phone, state=UserMenuStatesGroup.user_phone)
+
     # обработчик для выбора способа оплаты
     dp.register_message_handler(payment, state=UserMenuStatesGroup.choice_payment)
 
@@ -223,5 +232,8 @@ def start_bot():
 
     # ответ на успешный платеж
     dp.register_message_handler(successful_payment, content_types=ContentType.SUCCESSFUL_PAYMENT)
+
+    # обработчик не опознанных команд
+    dp.register_message_handler(unidentified_cmd)
 
     executor.start_polling(dp, skip_updates=True, on_startup=on_startup)

@@ -78,3 +78,14 @@ def user_payment_keyboard() -> ReplyKeyboardMarkup:
     kb.row(b1, b2)
     kb.add(b3)
     return kb
+
+
+def choice_keyboard() -> ReplyKeyboardMarkup:
+    """Клавиатура для выбора да/нет"""
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    b1 = KeyboardButton('Да')
+    b2 = KeyboardButton('Нет')
+    b3 = KeyboardButton('Отменить заказ')
+    kb.row(b1, b2)
+    kb.add(b3)
+    return kb

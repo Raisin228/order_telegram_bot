@@ -8,5 +8,8 @@ class UserMenuStatesGroup(StatesGroup):
     viewing_menu = State()
 
     # состояние для оформления заказа
+    choice_address = State()
     enter_address = State()
+    choice_phone = State()
+    user_phone = State()
     choice_payment = State()
