@@ -35,7 +35,8 @@ def db_start():
                    'user_id INTEGER PRIMARY KEY,'
                    ' product TEXT,'
                    ' total_price INTEGER,'
-                   ' address TEXT)')
+                   ' address TEXT,'
+                   ' phone_number TEXT)')
     # сохранение данных
     db.commit()
 
@@ -104,7 +105,7 @@ async def get_dishes_from_db() -> list[tuple]:
 
 
 async def del_dish_in_db(d: list[str, str, str]) -> None:
-    """Удалили товар который попросил пользователь"""
+    """Удалили товар, который попросил пользователь"""
     cursor.execute(f'DELETE FROM menu WHERE id = {d[0]};')
     db.commit()
 
@@ -212,6 +213,8 @@ def get_basket_data(user_id):
     # отправка данных
     if user_data:
         # приводим список продуктов в удобный вид
+        if user_data[1] == '':
+            return user_data
         products = dict()
         for product in user_data[1].split(','):
             if product in products.keys():
@@ -239,4 +242,10 @@ def clear_basket(user_id):
 def write_address(user_id, address):
     """Добавление в БД адреса доставки пользователя"""
     cursor.execute('UPDATE basket SET address="{}" WHERE user_id="{}"'.format(address, user_id))
+    db.commit()
+
+
+def write_phone(user_id, num):
+    """Добавления номера телефона пользователя в БД"""
+    cursor.execute('UPDATE basket SET phone_number="{}" WHERE user_id="{}"'.format(num, user_id))
     db.commit()

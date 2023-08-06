@@ -221,6 +221,15 @@ def start_bot():
     # обработчик состояния ввода адреса
     dp.register_message_handler(enter_address_step, state=UserMenuStatesGroup.enter_address)
 
+    # обработчик состояния выбора адреса
+    dp.register_message_handler(address, state=UserMenuStatesGroup.choice_address)
+
+    # обработчик состояния выбора номера телефона
+    dp.register_message_handler(phone, state=UserMenuStatesGroup.choice_phone)
+
+    # Обработчик состояния ввода номера телефона
+    dp.register_message_handler(get_user_phone, state=UserMenuStatesGroup.user_phone)
+
     # обработчик для выбора способа оплаты
     dp.register_message_handler(payment, state=UserMenuStatesGroup.choice_payment)
 

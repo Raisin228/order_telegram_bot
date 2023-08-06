@@ -50,3 +50,12 @@ def check_address(address, token):
         return 0
     else:
         return -1
+
+
+def phone_check(num):
+    """Проверка корректности номера телефона"""
+    check = re.match('^((8|\+7)[\- ]?)?(\(?\d{3}\)?[\- ]?)?[\d\- ]{7,10}$', num)
+    if check:
+        return True
+    else:
+        return False

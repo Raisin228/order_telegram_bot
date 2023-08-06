@@ -11,8 +11,9 @@ from order_telegram_bot.bot.config import *
 from order_telegram_bot.bot.handlers.user.user_states import UserMenuStatesGroup
 from order_telegram_bot.bot.keyboards.user.inlinekb import *
 from order_telegram_bot.bot.keyboards.user.replykb import *
-from order_telegram_bot.bot.other import check_address
+
 from order_telegram_bot.sqlite_bot.sqlite import *
+from order_telegram_bot.bot.other import *
 
 # забираем токены из .env
 load_dotenv()
@@ -29,7 +30,6 @@ async def start_user_cmd(message: types.Message):
     """Обработчик команды /start"""
     await bot.send_sticker(message.chat.id, 'CAACAgIAAxkBAAEJ7ytkz0X-9bZnxbLmTShkDPl8bl-UtQAC2A8AAkjyYEsV-8TaeHRrmC8E')
     await message.answer(text=START_USER_TEXT, parse_mode='html',
-                         reply_markup=user_start_keyboard(message.from_user.id))
 
 
 async def help_user_cmd(message: types.Message):
@@ -51,14 +51,22 @@ async def get_events(message: types.Message):
         await message.answer(text=NO_EVENTS)
     # вывод событий
     for i in data_events:
-        await message.answer_photo(i[2], caption=f'{i[1]}\n{i[3]}\n{i[4]}')
+        if i[5] == '-':
+            await message.answer_photo(i[2], caption=f'{i[1]}\n{i[3]}\n{i[4]}')
+        else:
+            await message.answer_photo(i[2], caption=f'{i[1]}\n{i[3]}\n{i[4]}',
+                                       reply_markup=inline_event_keyboard(i[5]))
 
 
-async def get_menu_position(message: types.Message):
+async def get_menu_position(message: types.Message, state: FSMContext):
     """Отправка пользователю карточки меню"""
-    await UserMenuStatesGroup.viewing_menu.set()
-    await message.answer(text=CHOOSE_BURGER,
-                         reply_markup=user_menu_keyboard())
+    if menu_positions():
+        await UserMenuStatesGroup.viewing_menu.set()
+        await message.answer(text=CHOOSE_BURGER,
+                             reply_markup=user_menu_keyboard())
+    else:
+        await message.answer(text='В меню пока ничего нет', reply_markup=user_start_keyboard(message.from_user.id))
+        await state.finish()
 
 
 async def choice_position_menu(message: types.Message, state: FSMContext):
@@ -74,17 +82,15 @@ async def choice_position_menu(message: types.Message, state: FSMContext):
         menu_dict = menu_positions()
 
         await message.delete()
-        await message.answer(text='Хороший выбор!👍', reply_markup=user_menu_position())
-        # await message.answer_photo(menu_dict[message.text][0], caption=f'{message.text}\n'
-        #                                                                f'{menu_dict[message.text][1]}\n'
-        #                                                                f'Стоимость: {menu_dict[message.text][2]}',
-        #                            reply_markup=inline_basket_keyboard())
-
-        # ВРЕМЕННЫЙ ВАРИАНТ СООБЩЕНИЯ БЕЗ ФОТО
-        await message.answer(text=f'<b>Название:</b> {message.text}\n'
-                                  f'<b>Описание:</b>{menu_dict[message.text][1]}\n'
-                                  f'<b>Стоимость:</b> {menu_dict[message.text][2]}', parse_mode='html',
-                             reply_markup=inline_basket_keyboard())
+                         
+        try:
+            await message.answer(text='Хороший выбор!👍', reply_markup=user_menu_position())
+            await message.answer_photo(menu_dict[message.text][0], caption=f'<b>Название:</b> {message.text}\n'
+                                      f'<b>Описание:</b>{menu_dict[message.text][1]}\n'
+                                      f'<b>Стоимость:</b> {menu_dict[message.text][2]}', parse_mode='html',
+                                       reply_markup=inline_basket_keyboard())
+        except KeyError:
+            await message.answer(text='Такого блюда у нас нет(')
 
 
 async def back_menu_cmd(message: types.Message):
@@ -115,6 +121,9 @@ async def callback_add_basket(callback: types.CallbackQuery):
                     reply_markup=inline_product_keyboard(product_data=product_data))
             except aiogram.utils.exceptions.MessageNotModified:
                 await callback.answer()
+        # бездействие при нажатии на счетчик
+        if data == 'count':
+            await callback.answer()
     else:
         # обработка данных для клавиатуры в позиции меню
         # если решили увеличить кол-во
@@ -129,10 +138,13 @@ async def callback_add_basket(callback: types.CallbackQuery):
                     data.split()[1]) - 1))
             else:
                 await callback.answer()
+        # бездействие при нажатии на счетчик
+        elif data == 'count':
+            await callback.answer()
         else:
             # отправка данных в БД
             for i in range(int(data)):
-                product_data = add_basket(callback.from_user.id, callback.message.text.split('\n')[0])
+                product_data = add_basket(callback.from_user.id, callback.message.caption.split('\n')[0])
             await callback.answer(text='Товар добавлен в корзину!')
 
 
@@ -140,9 +152,9 @@ async def viewing_basket_cmd(message: types.Message):
     """Обработчик команды просмотра содержимого корзины"""
     await message.delete()
     data = get_basket_data(message.from_user.id)
-    if data:
-        # получаем список продуктов
+    if type(data[1]) == dict:
         product_names = list(data[1].keys())
+
         if product_names[0]:
             await message.answer(text='В вашей корзине сейчас:', reply_markup=edit_basket_keyboard())
             product_count = data[1]
@@ -176,27 +188,74 @@ async def start_order_cmd(message: types.Message):
     """Обработчик команды для оформления заказа"""
     check_basket = get_basket_data(message.from_user.id)
     # проверка на пустоту корзины перед заказом
-    if '' not in list(check_basket[1].keys()):
-        await UserMenuStatesGroup.enter_address.set()
-        await message.answer(text=ADDRES, reply_markup=user_order_cancel())
+    if type(check_basket[1]) == dict:
+        if check_basket[3]:
+            await message.answer(text=f'Оставить прежний адрес?\n{check_basket[3]}', reply_markup=choice_keyboard())
+            await UserMenuStatesGroup.choice_address.set()
+        else:
+            await message.answer(text='Введите адрес для доставки', reply_markup=user_order_cancel())
+            await UserMenuStatesGroup.enter_address.set()
     else:
         await message.answer(text=IMPOSSIBLE_TO_ORDER,
                              reply_markup=user_start_keyboard(message.from_user.id))
+
+
+async def address(message: types.Message):
+    """Оставляем старый адрес или делаем новый"""
+    if message.text.lower() == 'да':
+        bd_num_phone = get_basket_data(message.from_user.id)[4]
+        if bd_num_phone:
+            await message.answer(text=f'Это ваш номер телефона: {bd_num_phone}?', reply_markup=choice_keyboard())
+            await UserMenuStatesGroup.choice_phone.set()
+    else:
+        await message.answer(text='Введите адрес для доставки, например, Тутаев, улица Волжская Набережная 19,'
+                                  ' квартира 1',
+                             reply_markup=user_order_cancel())
+        await UserMenuStatesGroup.enter_address.set()
 
 
 async def enter_address_step(message: types.Message):
     """Обработчик ввода адреса для доставки"""
     # проверка адреса на корректность
     check = check_address(message.text, GEO_TOKEN)
-
+    bd_num_phone = get_basket_data(message.from_user.id)[4]
     if not check:
         write_address(message.from_user.id, message.text)
-        await message.answer(text='Отлично! теперь выберете способ оплаты', reply_markup=user_payment_keyboard())
-        await UserMenuStatesGroup.choice_payment.set()
+        if bd_num_phone:
+            await message.answer(text=f'Это ваш номер телефона: {bd_num_phone}?', reply_markup=choice_keyboard())
+            await UserMenuStatesGroup.choice_phone.set()
+
+        else:
+            await message.answer(text='Введите ваш номер телефона')
+            await UserMenuStatesGroup.user_phone.set()
 
     else:
         await message.answer(text=DONT_CORRECT_ADDRES)
         await UserMenuStatesGroup.enter_address.set()
+
+
+async def phone(message: types.Message):
+    """Выбор телефона пользователя"""
+    if message.text.lower() == 'да':
+        await message.answer(text='Отлично! теперь выберете способ оплаты', reply_markup=user_payment_keyboard())
+        await UserMenuStatesGroup.choice_payment.set()
+    elif message.text.lower() == 'нет':
+        await message.answer(text='Тогда введите новый номер телефона', reply_markup=user_order_cancel())
+        await UserMenuStatesGroup.user_phone.set()
+    else:
+        await message.answer(text='Не понимаю вашего ответа(')
+        await UserMenuStatesGroup.choice_phone.set()
+
+
+async def get_user_phone(message: types.Message):
+    """Получение номера телефона пользователя"""
+    if phone_check(message.text):
+        write_phone(message.from_user.id, message.text)
+        await message.answer('Отлично! теперь выберете способ оплаты', reply_markup=user_payment_keyboard())
+        await UserMenuStatesGroup.choice_payment.set()
+    else:
+        await message.answer('Введен не корректный номер телефона! Попробуйте еще раз')
+        await UserMenuStatesGroup.user_phone.set()
 
 
 async def payment(message: types.Message, state: FSMContext):
@@ -235,9 +294,12 @@ async def payment(message: types.Message, state: FSMContext):
     elif message.text.lower() == '💵 наличными':
         order_str += f'\nИтог: {basket_data[2]}RUB'
         await message.answer(text='Заказ оформлен!')
-        await message.answer(text='Ваш заказ:\n' + order_str, reply_markup=user_order_cancel())
+        # очистка корзины при успешной оплате
+        clear_basket(message.from_user.id)
+        await message.answer(text='Ваш заказ:\n' + order_str, reply_markup=user_start_keyboard(message.from_user.id))
         await message.bot.send_message(chat_id=get_admin_id(), text=f'@{message.from_user.username} сделал заказ!\n'
-                                                                    f'Заказ:\n{order_str}\nОплата наличными')
+                                                                    f'Заказ:\n{order_str}\nОплата наличными\n'
+                                                                    f'Номер: {basket_data[4]}')
         await state.finish()
     else:
         await message.answer(DONT_CORRECT_PAYMENT)
@@ -257,6 +319,8 @@ async def successful_payment(message: types.Message):
     await message.answer(text=f'Заказ на сумму {message.successful_payment.total_amount // 100}'
                               f'{message.successful_payment.currency} успешно оплачен! Ожидайте!',
                          reply_markup=user_start_keyboard(message.from_user.id))
+    # очистка корзины при успешной оплате
+    clear_basket(message.from_user.id)
 
     # формирование сообщения с заказом для админа
     order_str = str()
@@ -271,7 +335,8 @@ async def successful_payment(message: types.Message):
 
     # сообщение об успешной оплате для главного админа
     await message.bot.send_message(chat_id=get_admin_id(), text=f'@{message.from_user.username} сделал заказ!\n'
-                                                                f'Заказ:\n{order_str}\nОплачено картой')
+                                                                f'Заказ:\n{order_str}\nОплачено картой\nНомер:'
+                                                                f' {basket_data[4]}')
 
 
 async def send_sticker(message: types.Message):
