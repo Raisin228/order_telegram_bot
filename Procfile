@@ -1,1 +1,1 @@
-worker: bot/run.py
+worker: python bot/run.py
