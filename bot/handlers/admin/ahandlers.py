@@ -188,7 +188,7 @@ async def get_link_to_social_networks(message: types.Message, state: FSMContext)
     # записали ссылку в MS
     async with state.proxy() as data:
         data['link'] = message.text
-    await message.answer(LAST_STEP_ADV, reply_markup=get_do_post('Показать анкету'))
+    await message.answer(LAST_STEP_ADV, reply_markup=get_do_post('👁 Показать анкету'))
     await AdminStatesGroup.ads_confirmation.set()
 
 
@@ -359,7 +359,7 @@ async def show_dish(message: types.Message, state: FSMContext) -> None:
         data = user_data
     # показываем
     await bot.send_photo(chat_id=message.from_user.id, photo=data['product_photo'],
-                         caption=f'<b>Название:</b> {data["product_name"]}\n<b>Цена:<b> {data["price"]}\n'
+                         caption=f'<b>Название:</b> {data["product_name"]}\n<b>Цена:</b> {data["price"]}\n'
                                  f'<b>Описание товара:</b> {data["product_descript"]}',
                          parse_mode='html', reply_markup=right_anket())
 

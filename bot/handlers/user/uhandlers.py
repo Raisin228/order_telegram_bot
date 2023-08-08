@@ -112,7 +112,7 @@ async def callback_add_basket(callback: types.CallbackQuery):
     # обработка данных для клавиатуры внутри корзины
     if data.split()[0] == 'B':
         if data.split()[1] == '+':
-            product_data = add_basket(callback.from_user.id, data.split()[2])
+            product_data = add_basket(callback.from_user.id, ' '.join(data.split()[2:]))
             await callback.message.edit_reply_markup(reply_markup=inline_product_keyboard(product_data=product_data))
 
         if data.split()[1] == '-':
@@ -145,7 +145,7 @@ async def callback_add_basket(callback: types.CallbackQuery):
         else:
             # отправка данных в БД
             for i in range(int(data)):
-                product_data = add_basket(callback.from_user.id, callback.message.caption.split('\n')[0])
+                product_data = add_basket(callback.from_user.id, ' '.join(callback.message.caption.split('\n')[0].split()[1:]))
             await callback.answer(text='Товар добавлен в корзину!')
 
 
@@ -286,7 +286,7 @@ async def payment(message: types.Message, state: FSMContext):
                                            currency='rub',
                                            prices=[price],
                                            start_parameter='order_pay',
-                                           payload=f'111')
+                                           payload=f'user_{message.from_user.id}')
         except aiogram.utils.exceptions.BadRequest:
             await message.answer(text='Ошибка оформления заказа! Попробуйте изменить адрес доставки')
             await UserMenuStatesGroup.enter_address.set()
@@ -319,8 +319,6 @@ async def successful_payment(message: types.Message):
     await message.answer(text=f'Заказ на сумму {message.successful_payment.total_amount // 100}'
                               f'{message.successful_payment.currency} успешно оплачен! Ожидайте!',
                          reply_markup=user_start_keyboard(message.from_user.id))
-    # очистка корзины при успешной оплате
-    clear_basket(message.from_user.id)
 
     # формирование сообщения с заказом для админа
     order_str = str()
@@ -337,6 +335,8 @@ async def successful_payment(message: types.Message):
     await message.bot.send_message(chat_id=get_admin_id(), text=f'@{message.from_user.username} сделал заказ!\n'
                                                                 f'Заказ:\n{order_str}\nОплачено картой\nНомер:'
                                                                 f' {basket_data[4]}')
+    # очистка корзины при успешной оплате
+    clear_basket(message.from_user.id)
 
 
 async def send_sticker(message: types.Message):
