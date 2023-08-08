@@ -281,7 +281,7 @@ async def edit_exist_adv(message: types.Message, state: FSMContext) -> None:
     # удаление из бд
     await del_event_in_db(need_d_for_del)
     # и создаём новое
-    await message.answer(NEW_DATE_FOR_EVENT, reply_markup=ReplyKeyboardRemove())
+    await message.answer(WARNING_EDIT_A + '\nВведите название события: ', reply_markup=exit_kb())
     await AdminStatesGroup.e_name.set()
 
 
@@ -415,15 +415,11 @@ async def action_with_dish(message: types.Message, state: FSMContext) -> None:
         try:
             int(for_compare[0])
         except ValueError:
-            await message.answer('Такого товара не существует. В следующий раз выберите один из'
-                                 ' предложенных вариантов.'
-                                 ' Перехожу в гл.меню admin', reply_markup=adm_opportunities())
+            await message.answer(NO_DISH, reply_markup=adm_opportunities())
             await AdminStatesGroup.adm_control_panel.set()
             return None
         if not any(map(lambda t: t[0] == int(for_compare[0]), data['menu_exist_in_db'])):
-            await message.answer('Такого товара не существует. В следующий раз выберите один из'
-                                 ' предложенных вариантов.'
-                                 ' Перехожу в гл.меню admin', reply_markup=adm_opportunities())
+            await message.answer(NO_DISH, reply_markup=adm_opportunities())
             await AdminStatesGroup.adm_control_panel.set()
             return None
         data['delite_d'] = message.text.split()

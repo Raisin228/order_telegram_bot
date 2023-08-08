@@ -122,7 +122,7 @@ def week_events():
     # список дат, входящих в текущую неделю
     ok_evens = list()
     # текущая дата
-    now_date = datetime.datetime.now()
+    now_date = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
     # id всех событий
     events_id = cursor.execute('SELECT id FROM events').fetchall()
 

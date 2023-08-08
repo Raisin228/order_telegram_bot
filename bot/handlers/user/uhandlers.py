@@ -53,9 +53,11 @@ async def get_events(message: types.Message):
     # вывод событий
     for i in data_events:
         if i[5] == '-':
-            await message.answer_photo(i[2], caption=f'{i[1]}\n{i[3]}\n{i[4]}')
+            await message.answer_photo(i[2], caption=f'<b>Название: </b>{i[1]}\n<b>Дата: </b>{i[4]}\n'
+                                                     f'<b>Описание: </b>{i[3]}', parse_mode='html')
         else:
-            await message.answer_photo(i[2], caption=f'{i[1]}\n{i[3]}\n{i[4]}',
+            await message.answer_photo(i[2], caption=f'<b>Название: </b>{i[1]}\n<b>Дата: </b>{i[4]}\n'
+                                                     f'<b>Описание: </b>{i[3]}', parse_mode='html',
                                        reply_markup=inline_event_keyboard(i[5]))
 
 
@@ -83,12 +85,13 @@ async def choice_position_menu(message: types.Message, state: FSMContext):
         menu_dict = menu_positions()
 
         await message.delete()
-                         
+
         try:
             await message.answer(text='Хороший выбор!👍', reply_markup=user_menu_position())
             await message.answer_photo(menu_dict[message.text][0], caption=f'<b>Название:</b> {message.text}\n'
-                                       f'<b>Описание:</b>{menu_dict[message.text][1]}\n'
-                                       f'<b>Стоимость:</b> {menu_dict[message.text][2]}', parse_mode='html',
+                                                                           f'<b>Описание:</b>{menu_dict[message.text][1]}\n'
+                                                                           f'<b>Стоимость:</b> {menu_dict[message.text][2]}',
+                                       parse_mode='html',
                                        reply_markup=inline_basket_keyboard())
         except KeyError:
             await message.answer(text='Такого блюда у нас нет(')
@@ -145,7 +148,8 @@ async def callback_add_basket(callback: types.CallbackQuery):
         else:
             # отправка данных в БД
             for i in range(int(data)):
-                product_data = add_basket(callback.from_user.id, ' '.join(callback.message.caption.split('\n')[0].split()[1:]))
+                product_data = add_basket(callback.from_user.id,
+                                          ' '.join(callback.message.caption.split('\n')[0].split()[1:]))
             await callback.answer(text='Товар добавлен в корзину!')
 
 
