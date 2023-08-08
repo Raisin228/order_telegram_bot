@@ -106,7 +106,17 @@ async def get_dishes_from_db() -> list[tuple]:
 
 async def del_dish_in_db(d: list[str, str, str]) -> None:
     """Удалили товар, который попросил пользователь"""
+
+    # удаление продукта так же из корзин пользователей
+    users = get_users_basket()
+    for user in users:
+        data = get_basket_data(int(user[0]))
+        count_product = data[1][d[1]][0]
+        for i in range(count_product):
+            add_basket(int(user[0]), d[1], '-')
+
     cursor.execute(f'DELETE FROM menu WHERE id = {d[0]};')
+
     db.commit()
 
 
@@ -208,7 +218,10 @@ def add_basket(user_id, product_title, type_add='+'):
 
 def get_basket_data(user_id):
     """Получение данных о корзине пользователя"""
-    user_data = list(cursor.execute('SELECT * FROM basket WHERE user_id=={key}'.format(key=user_id)).fetchone())
+    try:
+        user_data = list(cursor.execute('SELECT * FROM basket WHERE user_id=={key}'.format(key=user_id)).fetchone())
+    except TypeError:
+        return 0
 
     # отправка данных
     if user_data:
@@ -225,6 +238,12 @@ def get_basket_data(user_id):
         return user_data
     else:
         return 0
+
+
+def get_users_basket():
+    """Получение id всех пользователей с корзиной"""
+    id = cursor.execute('SELECT user_id FROM basket').fetchall()
+    return id
 
 
 def clear_basket(user_id):
