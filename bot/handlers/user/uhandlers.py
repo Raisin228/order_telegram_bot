@@ -157,17 +157,20 @@ async def viewing_basket_cmd(message: types.Message):
     """Обработчик команды просмотра содержимого корзины"""
     await message.delete()
     data = get_basket_data(message.from_user.id)
-    if type(data[1]) == dict:
-        product_names = list(data[1].keys())
+    if data:
+        if type(data[1]) == dict:
+            product_names = list(data[1].keys())
 
-        if product_names[0]:
-            await message.answer(text='В вашей корзине сейчас:', reply_markup=edit_basket_keyboard())
-            product_count = data[1]
-            menu_dict = menu_positions()
+            if product_names[0]:
+                await message.answer(text='В вашей корзине сейчас:', reply_markup=edit_basket_keyboard())
+                product_count = data[1]
+                menu_dict = menu_positions()
 
-            for product in product_count:
-                await message.answer(text=f'{product} - {menu_dict[product][2]}руб/шт.',
-                                     reply_markup=inline_product_keyboard([product, product_count[product][0]]))
+                for product in product_count:
+                    await message.answer(text=f'{product} - {menu_dict[product][2]}руб/шт.',
+                                         reply_markup=inline_product_keyboard([product, product_count[product][0]]))
+            else:
+                await message.answer(text='Ваша корзина пуста')
         else:
             await message.answer(text='Ваша корзина пуста')
     else:
