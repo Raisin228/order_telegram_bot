@@ -53,9 +53,11 @@ async def get_events(message: types.Message):
     # вывод событий
     for i in data_events:
         if i[5] == '-':
-            await message.answer_photo(i[2], caption=f'{i[1]}\n{i[3]}\n{i[4]}')
+            await message.answer_photo(i[2], caption=f'<b>Название: </b>{i[1]}\n<b>Дата: </b>{i[4]}\n'
+                                                     f'<b>Описание: </b>{i[3]}', parse_mode='html')
         else:
-            await message.answer_photo(i[2], caption=f'{i[1]}\n{i[3]}\n{i[4]}',
+            await message.answer_photo(i[2], caption=f'<b>Название: </b>{i[1]}\n<b>Дата: </b>{i[4]}\n'
+                                                     f'<b>Описание: </b>{i[3]}', parse_mode='html',
                                        reply_markup=inline_event_keyboard(i[5]))
 
 
@@ -83,12 +85,14 @@ async def choice_position_menu(message: types.Message, state: FSMContext):
         menu_dict = menu_positions()
 
         await message.delete()
-                         
+
         try:
             await message.answer(text='Хороший выбор!👍', reply_markup=user_menu_position())
-            await message.answer_photo(menu_dict[message.text][0], caption=f'<b>Название:</b> {message.text}\n'
-                                       f'<b>Описание:</b>{menu_dict[message.text][1]}\n'
-                                       f'<b>Стоимость:</b> {menu_dict[message.text][2]}', parse_mode='html',
+            await message.answer_photo(menu_dict[message.text][0],
+                                       caption=f'<b>Название:</b> {message.text}\n'
+                                               f'<b>Описание:</b>{menu_dict[message.text][1]}\n'
+                                               f'<b>Стоимость:</b> {menu_dict[message.text][2]}',
+                                       parse_mode='html',
                                        reply_markup=inline_basket_keyboard())
         except KeyError:
             await message.answer(text='Такого блюда у нас нет(')
@@ -273,6 +277,7 @@ async def payment(message: types.Message, state: FSMContext):
     for product in products:
         order_str += f'{product} - {products[product][0]}шт - {products[product][1]}руб.\n'
     # добавление информации об адресе
+    notif_for_cafe_worker = order_str
     order_str += f'Адрес доставки:\n{basket_data[3]}\n'
 
     if message.text.lower() == '💳 картой':
@@ -301,9 +306,18 @@ async def payment(message: types.Message, state: FSMContext):
         # очистка корзины при успешной оплате
         clear_basket(message.from_user.id)
         await message.answer(text='Ваш заказ:\n' + order_str, reply_markup=user_start_keyboard(message.from_user.id))
-        await message.bot.send_message(chat_id=get_admin_id(), text=f'@{message.from_user.username} сделал заказ!\n'
-                                                                    f'Заказ:\n{order_str}\nОплата наличными\n'
-                                                                    f'Номер: {basket_data[4]}')
+        await message.bot.send_message(chat_id=get_admin_cafe_id('YES'),
+                                       text=f'@{message.from_user.username} сделал заказ!\n'
+                                            f'Заказ:\n{order_str}\nОплата наличными\n'
+                                            f'Номер: {basket_data[4]}')
+
+        # сообщение работнику кафе
+        cafe_worker_id = get_admin_cafe_id('CAFE')
+        if cafe_worker_id is not None:
+            await message.bot.send_message(chat_id=get_admin_cafe_id('CAFE'),
+                                           text=f'<b>Поступил заказ:</b> {notif_for_cafe_worker}'
+                                                f'Выполните как можно скорее!!',
+                                           parse_mode='html')
         await state.finish()
     else:
         await message.answer(DONT_CORRECT_PAYMENT)
@@ -332,13 +346,21 @@ async def successful_payment(message: types.Message):
     for product in products:
         order_str += f'{product} - {products[product][0]}шт - {products[product][1]}руб.\n'
 
+    notif_for_cafe_worker = order_str
     order_str += f'Адрес доставки:\n{basket_data[3]}\n'
     order_str += f'\nИтог: {basket_data[2]}RUB'
 
     # сообщение об успешной оплате для главного админа
-    await message.bot.send_message(chat_id=get_admin_id(), text=f'@{message.from_user.username} сделал заказ!\n'
-                                                                f'Заказ:\n{order_str}\nОплачено картой\nНомер:'
-                                                                f' {basket_data[4]}')
+    await message.bot.send_message(chat_id=get_admin_cafe_id('YES'),
+                                   text=f'@{message.from_user.username} сделал заказ!\n'f'Заказ:\n{order_str}\n'
+                                        f'Оплачено картой\nНомер: {basket_data[4]}')
+    # сообщение работнику кафе
+    cafe_worker_id = get_admin_cafe_id('CAFE')
+    if cafe_worker_id is not None:
+        await message.bot.send_message(chat_id=get_admin_cafe_id('CAFE'),
+                                       text=f'<b>Поступил заказ:</b> {notif_for_cafe_worker} '
+                                            f'выполните как можно скорее!!',
+                                       parse_mode='html')
     # очистка корзины при успешной оплате
     clear_basket(message.from_user.id)
 

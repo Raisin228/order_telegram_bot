@@ -81,3 +81,32 @@ def new_prod_or_edit_exist() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(resize_keyboard=True).add(KeyboardButton('🟢 Добавить новый вид бургеров'),
                                                          KeyboardButton('✏️ Редактировать текущее меню')).add(
         KeyboardButton('⬅️ В главное меню'))
+
+
+def action_with_adm() -> ReplyKeyboardMarkup:
+    """Кнопки для выбора действий с другими админами"""
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    button1 = KeyboardButton('🖋 Редактировать существующих админов')
+    button2 = KeyboardButton('⬅️ В главное меню')
+    kb.add(button1, button2)
+    return kb
+
+
+def show_admins(data: list[tuple]) -> ReplyKeyboardMarkup:
+    """Показать кнопки с существующими админами"""
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    # делаем очень много кнопок со всеми событиями
+    for i in data:
+        button = KeyboardButton(f'{i[1]} {i[0]}')
+        kb.insert(button)
+    kb.add('⬅️ В главное меню')
+    return kb
+
+
+def rights_for_admin() -> ReplyKeyboardMarkup:
+    """Клавиатура с действиями которые можно сделать над админами"""
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    button1 = '🥷🏻 Сделать работником кафе'
+    button2 = '⬅️ В главное меню'
+    kb.add(button1, button2)
+    return kb

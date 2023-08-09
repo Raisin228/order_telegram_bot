@@ -27,10 +27,36 @@ def start_bot():
 
     # самая главная кнопка отмены
     dp.register_message_handler(cancel, lambda m: m.text in ['Отмена', '🚪 Выйти из админ.панели'], state='*')
-    dp.register_message_handler(in_main_menu, Text(equals='⬅️ В главное меню'), state='*')
+    dp.register_message_handler(in_main_menu, Text(equals='⬅️ В главное меню'),
+                                state=[AdminStatesGroup.adm_control_panel, AdminStatesGroup.burgers_menu,
+                                       AdminStatesGroup.edit_dish, AdminStatesGroup.edit_advs, AdminStatesGroup.e_name,
+                                       AdminStatesGroup.e_date, AdminStatesGroup.e_descript, AdminStatesGroup.get_photo,
+                                       AdminStatesGroup.get_link, AdminStatesGroup.ads_confirmation,
+                                       AdminStatesGroup.name_new_product, AdminStatesGroup.get_photo_dish,
+                                       AdminStatesGroup.dish_descript, AdminStatesGroup.dish_price,
+                                       AdminStatesGroup.dish_confirmation, AdminStatesGroup.choose_edit_dish,
+                                       AdminStatesGroup.edit_dish, AdminStatesGroup.control_admins])
+    # вернуться в меню выбора /adm_actions
+    dp.register_message_handler(step_back, Text(equals='⬅️ В главное меню'), state=[AdminStatesGroup.get_rights,
+                                                                                    AdminStatesGroup.choose_admin])
     # =======================admin handlers=======================
 
     """Всё что касается регистрации и входа"""
+    # возможность изменять права других админов
+    dp.register_message_handler(admin_actions_with_other_admins, commands=['adm_actions'],
+                                state=AdminStatesGroup.hide_field)
+
+    # проверяем что выбран существующий админ если всё ок предлагаем выдать ему права
+    dp.register_message_handler(action_with_choose_admin, state=AdminStatesGroup.choose_admin)
+
+    # редактирование текущего списка админов
+    dp.register_message_handler(edit_admins, Text(equals='🖋 Редактировать существующих админов'),
+                                state=AdminStatesGroup.control_admins)
+
+    # делаем запрос в бд на выдачу прав работника кафе
+    dp.register_message_handler(do_worker_cafe, Text(equals='🥷🏻 Сделать работником кафе'),
+                                state=AdminStatesGroup.get_rights)
+
     # вход в скрытое поле
     dp.register_message_handler(hide_command, commands=['hide'])
 
@@ -97,7 +123,8 @@ def start_bot():
                                 state=AdminStatesGroup.ads_confirmation)
 
     # записали событие в бд
-    dp.register_message_handler(add_ads_to_db, Text(equals='✅ Просто шикарно!!'), state=AdminStatesGroup.ads_confirmation)
+    dp.register_message_handler(add_ads_to_db, Text(equals='✅ Просто шикарно!!'),
+                                state=AdminStatesGroup.ads_confirmation)
 
     # защита от дурака
     dp.register_message_handler(dont_correct, content_types=types.ContentType.ANY,
