@@ -11,7 +11,8 @@ from order_telegram_bot.bot.keyboards.user.replykb import user_start_keyboard
 from order_telegram_bot.bot.main import bot
 from order_telegram_bot.sqlite_bot.sqlite import quantity_admins, create_admin, \
     chose_admin_password, get_user_password, get_events_from_db, del_event_in_db, \
-    create_menu, get_dishes_from_db, del_dish_in_db, write_event_to_db, get_admin_id, get_all_admins, create_cafe_worker
+    create_menu, get_dishes_from_db, del_dish_in_db, write_event_to_db, get_admin_cafe_id, \
+    get_all_admins, create_cafe_worker
 
 """Всякие обработчики отмены и возврата"""
 
@@ -124,7 +125,7 @@ async def admin_actions_with_other_admins(message: types.Message) -> None:
     # удаляем сообщение чтобы он не спамил
     await message.delete()
     # запрос в бд для того чтобы проверить что данный админ является главным
-    main_admin_id = get_admin_id()
+    main_admin_id = get_admin_cafe_id('YES')
     if message.from_user.id != main_admin_id:
         await message.answer('Вам <b>не доступен</b> данный функционал, потому что вы не являетесь '
                              'главным администратором.', parse_mode='html')

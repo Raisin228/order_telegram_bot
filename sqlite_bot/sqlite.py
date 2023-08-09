@@ -54,11 +54,11 @@ def get_user_password(user_id: int) -> str:
         return param[1]
 
 
-def get_admin_id() -> int | None:
+def get_admin_cafe_id(param: str) -> int | None:
     """Запрос на получение id главного админа
     Вернёт либо id главного админа либо None если его не существует"""
     try:
-        admin_id = int(cursor.execute('SELECT admin_id FROM admins WHERE main = "YES"').fetchone()[0])
+        admin_id = int(cursor.execute(f'SELECT admin_id FROM admins WHERE main = "{param}"').fetchone()[0])
     except TypeError:
         admin_id = None
     return admin_id
