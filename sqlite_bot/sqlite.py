@@ -20,7 +20,8 @@ def db_start():
                    ' link TEXT)')
 
     # таблица с данными об администраторах
-    cursor.execute('CREATE TABLE IF NOT EXISTS admins(admin_id INTEGER PRIMARY KEY, password TEXT, main TEXT)')
+    cursor.execute('CREATE TABLE IF NOT EXISTS admins(admin_id INTEGER PRIMARY KEY, password TEXT, main TEXT, '
+                   'nick TEXT)')
 
     # таблица для меню
     cursor.execute('CREATE TABLE IF NOT EXISTS menu('
@@ -53,9 +54,13 @@ def get_user_password(user_id: int) -> str:
         return param[1]
 
 
-def get_admin_id():
-    """Запрос на получение id главного админа"""
-    admin_id = int(cursor.execute('SELECT admin_id FROM admins WHERE main = "YES"').fetchone()[0])
+def get_admin_id() -> int | None:
+    """Запрос на получение id главного админа
+    Вернёт либо id главного админа либо None если его не существует"""
+    try:
+        admin_id = int(cursor.execute('SELECT admin_id FROM admins WHERE main = "YES"').fetchone()[0])
+    except TypeError:
+        admin_id = None
     return admin_id
 
 
@@ -65,17 +70,30 @@ def quantity_admins() -> int:
     return count
 
 
-async def create_admin(user_id: int, password: str) -> str:
+def get_all_admins() -> list[tuple]:
+    """Получаем всех НЕ главных админов"""
+    return cursor.execute('SELECT admin_id, nick FROM admins WHERE main IN ("NO", "CAFE");').fetchall()
+
+
+async def create_admin(user_id: int, password: str, user_name: str = 'No_name') -> str:
     """Создаём пустую ячейку в бд для конкретного админа"""
     param = quantity_admins()
     if cursor.execute(f'SELECT * FROM admins WHERE admin_id = {user_id}').fetchone() is None and param == 0:
-        cursor.execute('INSERT INTO admins VALUES(?, ?, ?) ', (user_id, password, 'YES'))
+        cursor.execute('INSERT INTO admins VALUES(?, ?, ?, ?) ', (user_id, password, 'YES', user_name))
         db.commit()
         return 'OK'
     elif cursor.execute(f'SELECT * FROM admins WHERE admin_id = {user_id}').fetchone() is None and param != 0:
-        cursor.execute('INSERT INTO admins VALUES(?, ?, ?) ', (user_id, password, 'NO'))
+        cursor.execute('INSERT INTO admins VALUES(?, ?, ?, ?) ', (user_id, password, 'NO', user_name))
         db.commit()
         return 'OK'
+
+
+async def create_cafe_worker(u_id: int) -> None:
+    """добавляем админу по id в main CAFE"""
+    if cursor.execute(f'SELECT main FROM admins WHERE admin_id = "{u_id}"') == 'CAFE':
+        return
+    cursor.execute(f'UPDATE admins SET main = "CAFE" WHERE admin_id = "{u_id}";')
+    db.commit()
 
 
 async def write_event_to_db(get_data: tuple) -> None:

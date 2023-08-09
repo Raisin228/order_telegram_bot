@@ -88,9 +88,10 @@ async def choice_position_menu(message: types.Message, state: FSMContext):
 
         try:
             await message.answer(text='Хороший выбор!👍', reply_markup=user_menu_position())
-            await message.answer_photo(menu_dict[message.text][0], caption=f'<b>Название:</b> {message.text}\n'
-                                                                           f'<b>Описание:</b>{menu_dict[message.text][1]}\n'
-                                                                           f'<b>Стоимость:</b> {menu_dict[message.text][2]}',
+            await message.answer_photo(menu_dict[message.text][0],
+                                       caption=f'<b>Название:</b> {message.text}\n'
+                                               f'<b>Описание:</b>{menu_dict[message.text][1]}\n'
+                                               f'<b>Стоимость:</b> {menu_dict[message.text][2]}',
                                        parse_mode='html',
                                        reply_markup=inline_basket_keyboard())
         except KeyError:

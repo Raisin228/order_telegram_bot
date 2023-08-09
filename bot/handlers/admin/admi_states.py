@@ -3,7 +3,16 @@ from aiogram.dispatcher.filters.state import StatesGroup, State
 
 class AdminStatesGroup(StatesGroup):
     """Состояния в которых может находиться admin"""
-    # скрытое поле
+    # скрытое поле для главного админа чтобы управлять другими админами
+    control_admins = State()
+
+    # когда главный админ выбрал 1 из админов
+    choose_admin = State()
+
+    # выдача новых прав для админа
+    get_rights = State()
+
+    # скрытое поле для всех админов
     hide_field = State()
 
     # ввод нового пароля

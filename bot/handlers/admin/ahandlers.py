@@ -11,14 +11,21 @@ from order_telegram_bot.bot.keyboards.user.replykb import user_start_keyboard
 from order_telegram_bot.bot.main import bot
 from order_telegram_bot.sqlite_bot.sqlite import quantity_admins, create_admin, \
     chose_admin_password, get_user_password, get_events_from_db, del_event_in_db, \
-    create_menu, get_dishes_from_db, del_dish_in_db
-from order_telegram_bot.sqlite_bot.sqlite import write_event_to_db
+    create_menu, get_dishes_from_db, del_dish_in_db, write_event_to_db, get_admin_id, get_all_admins, create_cafe_worker
+
+"""Всякие обработчики отмены и возврата"""
 
 
 async def cancel(message: types.Message, state: FSMContext) -> None:
     """Кнопка canel для выхода в самое главное меню user"""
     await state.finish()
     await message.answer(IN_USER_MENU, reply_markup=user_start_keyboard(message.chat.id))
+
+
+async def step_back(message: types.Message) -> None:
+    """Кнопка которая делает шаг назад"""
+    await message.answer('Вы вернулись в главное меню /adm_actions', reply_markup=action_with_adm())
+    await AdminStatesGroup.control_admins.set()
 
 
 async def in_main_menu(message: types.Message) -> None:
@@ -74,7 +81,8 @@ async def enter_pass_conf(message: types.Message):
 
 async def enter_new_password(message: types.Message):
     """Запрос пароля при регистрации нового админа"""
-    if await create_admin(message.from_user.id, message.text) is not None:
+    if await create_admin(user_id=message.from_user.id, user_name=message.from_user.first_name,
+                          password=message.text) is not None:
         await message.answer(YOU_ADM, reply_markup=login_vs_signin())
         await AdminStatesGroup.hide_field.set()
 
@@ -104,6 +112,76 @@ async def enter_password(message: types.Message) -> None:
         await AdminStatesGroup.adm_control_panel.set()
     else:
         await message.answer(UNCORECT_PASS, reply_markup=cancelkb())
+
+
+"""Работа в скрытом поле (редактирования прав для админов)"""
+
+
+async def admin_actions_with_other_admins(message: types.Message) -> None:
+    """Админ зашёл во 2-ое скрытое поле где он может редактировать список администраторов и выдавать им разные права
+    (доступно только для главного администратора)"""
+
+    # удаляем сообщение чтобы он не спамил
+    await message.delete()
+    # запрос в бд для того чтобы проверить что данный админ является главным
+    main_admin_id = get_admin_id()
+    if message.from_user.id != main_admin_id:
+        await message.answer('Вам <b>не доступен</b> данный функционал, потому что вы не являетесь '
+                             'главным администратором.', parse_mode='html')
+    else:
+        await message.answer(f'Добро пожаловать <b>{message.from_user.username}</b> в меню управления админами',
+                             reply_markup=action_with_adm(), parse_mode='html')
+        # перевели в новый режим
+        await AdminStatesGroup.control_admins.set()
+
+
+async def edit_admins(message: types.Message) -> None:
+    """Нажали на кнопу редактировать админов"""
+    # смотрм сколько админов есть
+    number_exist_admins = quantity_admins()
+    if number_exist_admins == 1:
+        await message.answer('В данный момент существует только 1 администратор (это Вы)')
+        await message.answer('Пока что некого редактировать. Вернитесь позднее...')
+    else:
+        exist_admins = get_all_admins()
+        await message.answer('Выберите админа, которому хотите выдать права...', reply_markup=show_admins(exist_admins))
+        await AdminStatesGroup.choose_admin.set()
+
+
+async def action_with_choose_admin(message: types.Message, state: FSMContext) -> None:
+    """Проверяем что выбранный админ существует (корректные данные) и если всё ок предлагаем выдать ему нужные права"""
+    # получили всех админов
+    exist_admins = get_all_admins()
+    # положили в ms
+    async with state.proxy() as data:
+        data['choose_admin'] = message.text
+
+    check = data['choose_admin'].split()
+    try:
+        int(check[1])
+    except ValueError:
+        await message.answer('Такого админа не существует😔')
+    except IndexError:
+        await message.answer('Такого админа не существует😔')
+    else:
+        if tuple([int(check[1]), check[0]]) in exist_admins:
+            await message.answer('Выберите какие права ему нужно выдать...', reply_markup=rights_for_admin())
+            await AdminStatesGroup.get_rights.set()
+        else:
+            await message.answer('Такого админа не существует😔')
+
+
+async def do_worker_cafe(message: types.Message, state: FSMContext) -> None:
+    """Даём супер права работнику кафе"""
+
+    # открываем ms и читаем id админа
+    async with state.proxy() as data:
+        id_need_admin = int(data['choose_admin'].split()[1])
+
+    # выдаём нужные права на работу в кафе
+    await create_cafe_worker(id_need_admin)
+
+    await message.answer('Теперь данный админ помечен как работник кафе. (Ему и Вам будут приходить заказы)')
 
 
 """Создание событий в Тутаеве"""
@@ -438,7 +516,7 @@ async def edit_exist_dish(message: types.Message, state: FSMContext) -> None:
     await del_dish_in_db(need_d_for_del)
     # и создаём новое
     await message.answer('Сейчас будет предложено ввести новые данные приготовьтесь\nВведите название товара:',
-                         reply_markup=ReplyKeyboardRemove())
+                         reply_markup=exit_kb())
     await AdminStatesGroup.name_new_product.set()
 
 
