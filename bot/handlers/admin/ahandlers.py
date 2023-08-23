@@ -311,7 +311,7 @@ async def add_ads_to_db(message: types.Message, state: FSMContext) -> None:
 """Редактирование событий"""
 
 
-async def list_events_to_edit(message: types.Message, state: FSMContext):
+async def list_events_to_edit(message: types.Message, state: FSMContext) -> None:
     """Редактирование уже созданных событий"""
     await message.answer(EDIT_EXIST_EVENTS)
 
