@@ -260,8 +260,8 @@ def get_basket_data(user_id):
 
 def get_users_basket():
     """Получение id всех пользователей с корзиной"""
-    id = cursor.execute('SELECT user_id FROM basket').fetchall()
-    return id
+    user_id = cursor.execute('SELECT user_id FROM basket').fetchall()
+    return user_id
 
 
 def clear_basket(user_id):
