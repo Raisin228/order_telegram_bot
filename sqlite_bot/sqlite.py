@@ -23,6 +23,13 @@ def db_start():
     cursor.execute('CREATE TABLE IF NOT EXISTS admins(admin_id INTEGER PRIMARY KEY, password TEXT, main TEXT, '
                    'nick TEXT)')
 
+    # таблица с данными о работниках кафе
+    cursor.execute('CREATE TABLE IF NOT EXISTS cafe_workers(worker_id INTEGER PRIMARY KEY)')
+
+    # таблица для хранения пароля для расширения прав
+
+    cursor.execute('CREATE TABLE IF NOT EXISTS password(id INTEGER, key TEXT, date TEXT)')
+
     # таблица для меню
     cursor.execute('CREATE TABLE IF NOT EXISTS menu('
                    'id INTEGER PRIMARY KEY,'
@@ -42,6 +49,20 @@ def db_start():
     db.commit()
 
 
+async def update_right_password(passw: str, date: str):
+    """Пишем новый пароль доступа в бд"""
+    # если уже есть строка со старым паролем вначале её удаляем
+    if cursor.execute('SELECT * FROM password').fetchone() is not None:
+        cursor.execute('DELETE FROM password WHERE id = (SELECT id FROM password ORDER BY id LIMIT 1);')
+    cursor.execute(f'INSERT INTO password values(?, ?, ?);', (1, passw, date))
+    db.commit()
+
+
+def get_right_pass() -> tuple[str, str]:
+    """Получаем пароль и дату его создания из бд"""
+    return cursor.execute(f'SELECT key, date FROM password WHERE id = 1').fetchone()
+
+
 async def chose_admin_password() -> str:
     """Запрос на получение пароля 1 администратора"""
     return cursor.execute('SELECT * FROM admins WHERE main = "YES";').fetchone()[1]
@@ -54,14 +75,24 @@ def get_user_password(user_id: int) -> str:
         return param[1]
 
 
-def get_admin_cafe_id(param: str) -> int | None:
+def get_admin_id() -> int | None:
     """Запрос на получение id главного админа
     Вернёт либо id главного админа либо None если его не существует"""
     try:
-        admin_id = int(cursor.execute(f'SELECT admin_id FROM admins WHERE main = "{param}"').fetchone()[0])
+        admin_id = int(cursor.execute(f'SELECT admin_id FROM admins WHERE main = "YES"').fetchone()[0])
     except TypeError:
         admin_id = None
     return admin_id
+
+
+def get_cafe_workers_id() -> list[tuple[int]] | None:
+    """Запрос на получение id всех работников кафе
+    Вернёт либо список с кортежами id работников либо None если их нет"""
+    try:
+        workers_id = cursor.execute(f'SELECT * FROM cafe_workers').fetchall()
+    except TypeError:
+        workers_id = None
+    return workers_id
 
 
 def quantity_admins() -> int:
@@ -88,12 +119,14 @@ async def create_admin(user_id: int, password: str, user_name: str = 'No_name') 
         return 'OK'
 
 
-async def create_cafe_worker(u_id: int) -> None:
-    """добавляем админу по id в main CAFE"""
-    if cursor.execute(f'SELECT main FROM admins WHERE admin_id = "{u_id}"') == 'CAFE':
-        return
-    cursor.execute(f'UPDATE admins SET main = "CAFE" WHERE admin_id = "{u_id}";')
+async def create_cafe_worker(u_id: int) -> bool:
+    """делаем пользователя работником кафе"""
+    # если такого пользователя не существует
+    if cursor.execute(f'SELECT * FROM cafe_workers WHERE worker_id = {u_id}').fetchone() is not None:
+        return False
+    cursor.execute('INSERT INTO cafe_workers VALUES(?)', (u_id,))
     db.commit()
+    return True
 
 
 async def write_event_to_db(get_data: tuple) -> None:
@@ -260,8 +293,8 @@ def get_basket_data(user_id):
 
 def get_users_basket():
     """Получение id всех пользователей с корзиной"""
-    id = cursor.execute('SELECT user_id FROM basket').fetchall()
-    return id
+    id_info = cursor.execute('SELECT user_id FROM basket').fetchall()
+    return id_info
 
 
 def clear_basket(user_id):

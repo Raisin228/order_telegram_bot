@@ -1,8 +1,11 @@
 # для всяких мелких побочных ф-ий
 import re
+import secrets
 from datetime import datetime, timedelta
 
 import requests
+
+from order_telegram_bot.sqlite_bot.sqlite import get_right_pass
 
 
 def my_pred(s: str) -> bool:
@@ -58,3 +61,22 @@ def phone_check(num):
         return True
     else:
         return False
+
+
+def generate_pass() -> str:
+    """Генерация пароля длины 8 символов"""
+    password = secrets.token_hex(4)
+    return password
+
+
+def is_valid_password(password: str) -> bool:
+    """Является ли данный пароль корректным и актуальным для выдачи прав"""
+
+    # делаем запрос в бд и забираем оттуда пароль
+    clue_date_from_db = get_right_pass()
+    # проверяем что пароль совпадает и он валидный по дате
+    if password == clue_date_from_db[0] and \
+            datetime.now() - datetime.strptime(clue_date_from_db[1], "%d.%m.%Y") <= timedelta(days=1):
+        return True
+    return False
+

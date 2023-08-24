@@ -1,4 +1,6 @@
 # сами обработчики администратора
+from datetime import datetime
+
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 from aiogram.types import ReplyKeyboardRemove
@@ -9,10 +11,10 @@ from order_telegram_bot.bot.keyboards.admin.inlinekb import link_in_button_adv
 from order_telegram_bot.bot.keyboards.admin.replykb import *
 from order_telegram_bot.bot.keyboards.user.replykb import user_start_keyboard
 from order_telegram_bot.bot.main import bot
+from order_telegram_bot.bot.other import generate_pass
 from order_telegram_bot.sqlite_bot.sqlite import quantity_admins, create_admin, \
     chose_admin_password, get_user_password, get_events_from_db, del_event_in_db, \
-    create_menu, get_dishes_from_db, del_dish_in_db, write_event_to_db, get_admin_cafe_id, \
-    get_all_admins, create_cafe_worker
+    create_menu, get_dishes_from_db, del_dish_in_db, write_event_to_db, get_admin_id, update_right_password
 
 """Всякие обработчики отмены и возврата"""
 
@@ -125,7 +127,7 @@ async def admin_actions_with_other_admins(message: types.Message) -> None:
     # удаляем сообщение чтобы он не спамил
     await message.delete()
     # запрос в бд для того чтобы проверить что данный админ является главным
-    main_admin_id = get_admin_cafe_id('YES')
+    main_admin_id = get_admin_id()
     if message.from_user.id != main_admin_id:
         await message.answer('Вам <b>не доступен</b> данный функционал, потому что вы не являетесь '
                              'главным администратором.', parse_mode='html')
@@ -136,53 +138,14 @@ async def admin_actions_with_other_admins(message: types.Message) -> None:
         await AdminStatesGroup.control_admins.set()
 
 
-async def edit_admins(message: types.Message) -> None:
-    """Нажали на кнопу редактировать админов"""
-    # смотрм сколько админов есть
-    number_exist_admins = quantity_admins()
-    if number_exist_admins == 1:
-        await message.answer('В данный момент существует только 1 администратор (это Вы)')
-        await message.answer('Пока что некого редактировать. Вернитесь позднее...')
-    else:
-        exist_admins = get_all_admins()
-        await message.answer('Выберите админа, которому хотите выдать права...', reply_markup=show_admins(exist_admins))
-        await AdminStatesGroup.choose_admin.set()
-
-
-async def action_with_choose_admin(message: types.Message, state: FSMContext) -> None:
-    """Проверяем что выбранный админ существует (корректные данные) и если всё ок предлагаем выдать ему нужные права"""
-    # получили всех админов
-    exist_admins = get_all_admins()
-    # положили в ms
-    async with state.proxy() as data:
-        data['choose_admin'] = message.text
-
-    check = data['choose_admin'].split()
-    try:
-        int(check[1])
-    except ValueError:
-        await message.answer('Такого админа не существует😔')
-    except IndexError:
-        await message.answer('Такого админа не существует😔')
-    else:
-        if tuple([int(check[1]), check[0]]) in exist_admins:
-            await message.answer('Выберите какие права ему нужно выдать...', reply_markup=rights_for_admin())
-            await AdminStatesGroup.get_rights.set()
-        else:
-            await message.answer('Такого админа не существует😔')
-
-
-async def do_worker_cafe(message: types.Message, state: FSMContext) -> None:
-    """Даём супер права работнику кафе"""
-
-    # открываем ms и читаем id админа
-    async with state.proxy() as data:
-        id_need_admin = int(data['choose_admin'].split()[1])
-
-    # выдаём нужные права на работу в кафе
-    await create_cafe_worker(id_need_admin)
-
-    await message.answer('Теперь данный админ помечен как работник кафе. (Ему и Вам будут приходить заказы)')
+async def generate_password(message: types.Message) -> None:
+    """Генерируем пароль/время и пишем в бд для выдачи прав на работника кафе"""
+    date_create = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).strftime("%d.%m.%Y")
+    password = generate_pass()
+    # пишем в бд новую запись
+    await update_right_password(password, date_create)
+    await message.answer(f'Вот Ваш пароль: <b>{password}</b>\nОн <i>действителен ровно сутки</i>!!\n'
+                         f'Дальше придётся создать новый', parse_mode='html')
 
 
 """Создание событий в Тутаеве"""
