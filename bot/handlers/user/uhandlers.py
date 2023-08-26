@@ -146,7 +146,7 @@ async def callback_add_basket(callback: types.CallbackQuery):
             await callback.message.edit_reply_markup(reply_markup=inline_product_keyboard(product_data=product_data))
 
         if data.split()[1] == '-':
-            product_data = add_basket(callback.from_user.id, data.split()[2], type_add='-')
+            product_data = add_basket(callback.from_user.id, ' '.join(data.split()[2:]), type_add='-')
             try:
                 await callback.message.edit_reply_markup(
                     reply_markup=inline_product_keyboard(product_data=product_data))

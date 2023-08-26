@@ -143,7 +143,7 @@ async def get_events_from_db() -> list[tuple]:
 
 
 async def del_event_in_db(d: list[str, str, str]) -> None:
-    """Удалили мероприятие которое попросил пользователь"""
+    """Удалили мероприятие, которое попросил пользователь"""
     cursor.execute(f'DELETE FROM events WHERE id = {d[0]};')
     db.commit()
 
@@ -230,7 +230,7 @@ def add_basket(user_id, product_title, type_add='+'):
     else:
         if type_add == '+':
             if user[1]:
-                products_str = user[1] + ',' + product_title
+                products_str = user[1] + ';' + product_title
             else:
                 products_str = product_title
             # если корзина уже существует
@@ -240,13 +240,13 @@ def add_basket(user_id, product_title, type_add='+'):
                 user_id
             ))
             db.commit()
-            count_product = products_str.split(',').count(product_title)
+            count_product = products_str.split(';').count(product_title)
             # возвращаем список [название продукта, его кол-во]
             return [product_title, count_product]
 
         # удаление продукта из корзины
         elif type_add == '-':
-            products = user[1].split(',')
+            products = user[1].split(';')
 
             # пытаемся удалить продукт, если он еще есть
             try:
@@ -255,7 +255,7 @@ def add_basket(user_id, product_title, type_add='+'):
                 return [product_title, 0]
 
             # формируем новый список продуктов
-            new_product_str = ','.join(products)
+            new_product_str = ';'.join(products)
             # обновляем БД
             cursor.execute('UPDATE basket SET product="{}", total_price="{}" WHERE user_id = "{}"'.format(
                 new_product_str,
@@ -280,7 +280,7 @@ def get_basket_data(user_id):
         if user_data[1] == '':
             return user_data
         products = dict()
-        for product in user_data[1].split(','):
+        for product in user_data[1].split(';'):
             if product in products.keys():
                 products[product][0] += 1
             else:
