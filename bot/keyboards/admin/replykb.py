@@ -86,7 +86,7 @@ def new_prod_or_edit_exist() -> ReplyKeyboardMarkup:
 def action_with_adm() -> ReplyKeyboardMarkup:
     """Кнопки для выбора действий с другими админами"""
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
-    button1 = KeyboardButton('🖋 Редактировать существующих админов')
+    button1 = KeyboardButton('🎲 Генерировать пароль для работника кафе')
     button2 = KeyboardButton('⬅️ В главное меню')
     kb.add(button1, button2)
     return kb

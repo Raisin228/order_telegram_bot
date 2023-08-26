@@ -4,6 +4,9 @@ from aiogram.dispatcher.filters.state import StatesGroup, State
 class UserMenuStatesGroup(StatesGroup):
     """Состояния, в которых может находиться пользователь"""
 
+    # выдача прав (работника кафе)
+    cafe_worker = State()
+
     # состояние для просмотра меню
     viewing_menu = State()
 

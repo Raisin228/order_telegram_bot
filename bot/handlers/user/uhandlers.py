@@ -9,11 +9,11 @@ from dotenv import load_dotenv
 
 from order_telegram_bot.bot.config import *
 from order_telegram_bot.bot.handlers.user.user_states import UserMenuStatesGroup
+from order_telegram_bot.bot.keyboards.admin.replykb import cancelkb
 from order_telegram_bot.bot.keyboards.user.inlinekb import *
 from order_telegram_bot.bot.keyboards.user.replykb import *
-
-from order_telegram_bot.sqlite_bot.sqlite import *
 from order_telegram_bot.bot.other import *
+from order_telegram_bot.sqlite_bot.sqlite import *
 
 # забираем токены из .env
 load_dotenv()
@@ -41,6 +41,32 @@ async def help_user_cmd(message: types.Message):
 async def description_cmd(message: types.Message):
     """Обработчик команды /desk(описание бота)"""
     await message.answer(text=DESCRIPTION_USER, parse_mode='html')
+
+
+async def get_rights_cmd(message: types.Message):
+    """Обработчик на получение прав работника кафе"""
+    await message.answer('Хотите получить права работника кафе?\nВведите пароль...', reply_markup=cancelkb())
+    # перевели в режим получения прав
+    await UserMenuStatesGroup.cafe_worker.set()
+
+
+async def is_correct_pass_cafe_rights(message: types.Message, state: FSMContext):
+    """Проверяем пароль на корректность"""
+    # если валидный пароль заносим пользователя в табличку cafe_workers
+
+    if is_valid_password(message.text):
+        if await create_cafe_worker(message.from_user.id):
+            await message.answer(
+                'Теперь вы стали работником кафе! Я буду присылать Вам уведомления о заказанных блюдах',
+                reply_markup=user_start_keyboard(message.from_user.id))
+        else:
+            await message.answer('Вы уже являетесь работником кафе! Повторная регистрация невозможна',
+                                 reply_markup=user_start_keyboard(message.from_user.id))
+        await state.finish()
+    else:
+        await message.answer('⚠️⚠️ Отказано в доступе (запросите актуальный ключ у админа)',
+                             reply_markup=user_start_keyboard(message.from_user.id))
+        await state.finish()
 
 
 async def get_events(message: types.Message):
@@ -306,18 +332,19 @@ async def payment(message: types.Message, state: FSMContext):
         # очистка корзины при успешной оплате
         clear_basket(message.from_user.id)
         await message.answer(text='Ваш заказ:\n' + order_str, reply_markup=user_start_keyboard(message.from_user.id))
-        await message.bot.send_message(chat_id=get_admin_cafe_id('YES'),
+        await message.bot.send_message(chat_id=get_admin_id(),
                                        text=f'@{message.from_user.username} сделал заказ!\n'
                                             f'Заказ:\n{order_str}\nОплата наличными\n'
                                             f'Номер: {basket_data[4]}')
 
         # сообщение работнику кафе
-        cafe_worker_id = get_admin_cafe_id('CAFE')
+        cafe_worker_id = get_cafe_workers_id()
         if cafe_worker_id is not None:
-            await message.bot.send_message(chat_id=get_admin_cafe_id('CAFE'),
-                                           text=f'<b>Поступил заказ:</b> {notif_for_cafe_worker}'
-                                                f'Выполните как можно скорее!!',
-                                           parse_mode='html')
+            for i in cafe_worker_id:
+                await message.bot.send_message(chat_id=i[0],
+                                               text=f'<b>Поступил заказ:</b> {notif_for_cafe_worker}'
+                                                    f'Выполните как можно скорее!!',
+                                               parse_mode='html')
         await state.finish()
     else:
         await message.answer(DONT_CORRECT_PAYMENT)
@@ -351,16 +378,17 @@ async def successful_payment(message: types.Message):
     order_str += f'\nИтог: {basket_data[2]}RUB'
 
     # сообщение об успешной оплате для главного админа
-    await message.bot.send_message(chat_id=get_admin_cafe_id('YES'),
+    await message.bot.send_message(chat_id=get_admin_id(),
                                    text=f'@{message.from_user.username} сделал заказ!\n'f'Заказ:\n{order_str}\n'
                                         f'Оплачено картой\nНомер: {basket_data[4]}')
     # сообщение работнику кафе
-    cafe_worker_id = get_admin_cafe_id('CAFE')
+    cafe_worker_id = get_cafe_workers_id()
     if cafe_worker_id is not None:
-        await message.bot.send_message(chat_id=get_admin_cafe_id('CAFE'),
-                                       text=f'<b>Поступил заказ:</b> {notif_for_cafe_worker} '
-                                            f'выполните как можно скорее!!',
-                                       parse_mode='html')
+        for i in cafe_worker_id:
+            await message.bot.send_message(chat_id=i[0],
+                                           text=f'<b>Поступил заказ:</b> {notif_for_cafe_worker} '
+                                                f'выполните как можно скорее!!',
+                                           parse_mode='html')
     # очистка корзины при успешной оплате
     clear_basket(message.from_user.id)
 
