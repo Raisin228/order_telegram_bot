@@ -31,6 +31,7 @@
 
 - <a href='https://github.com/Raisin228/order_telegram_bot/tree/main/architectures'>**Architectures**</a> - папка с 
   архитектурой
+- <a href='https://github.com/Raisin228/order_telegram_bot/tree/main/bot_scrins'>**Bot_scrins**</a> - папка со скринами работы бота
 - <a href='https://github.com/Raisin228/order_telegram_bot/tree/main/bot'>**Bot**</a> - папка с основным кодом проекта
     - <a href='https://github.com/Raisin228/order_telegram_bot/tree/main/bot/handlers'>**Handlers**</a> - папка, в которой
       находятся обработчики на действия пользователей
@@ -133,19 +134,19 @@
 ---
 
 ### Начало работы
-<img src="">
+<img src="https://github.com/Raisin228/order_telegram_bot/blob/main/bot_scrins/start_work.png">
 
 ### Просмотр ближайших событий
-<img src="">
+<img src="https://github.com/Raisin228/order_telegram_bot/blob/main/bot_scrins/viewing_events.png">
 
 ### Добавление бургера в коризну
-<img src="">
+<img src="https://github.com/Raisin228/order_telegram_bot/blob/main/bot_scrins/ordering_goods.png">
 
 ### Оплата по карте
-<img src="">
+<img src="https://github.com/Raisin228/order_telegram_bot/blob/main/bot_scrins/pay_bill.png">
 
 ### Админская клавиатура
-<img src="">
+<img src="https://github.com/Raisin228/order_telegram_bot/blob/main/bot_scrins/adm_actions.png">
 
 ### Генерировать ключ для расширения прав пользователя
-<img src="">
+<img src="https://github.com/Raisin228/order_telegram_bot/blob/main/bot_scrins/generate_key.png">
