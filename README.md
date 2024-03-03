@@ -1,6 +1,5 @@
 # <a href='https://t.me/tutaev_events_bot'>КофеШтабот</a>
 
----
 
 ## Описание
 
@@ -26,7 +25,6 @@
 
 ## Структура репозитория
 
----
 
 - <a href='https://github.com/Raisin228/order_telegram_bot/tree/main/architectures'>**Architectures**</a> - папка с 
   архитектурой
@@ -87,7 +85,6 @@
 
 ## Запуск бота
 
----
 
 * Клонируйте репозиторий себе на локальную машину `git clone ссылка на репозиторий`
 * Создайте виртуальное окружение `python -m venv venv`
@@ -104,7 +101,6 @@
 
 ## Стек технологий
 
----
 
 1. [Python3](https://www.python.org/) - язык программирования
 2. [Aiogram](https://docs.aiogram.dev/en/dev-3.x/) - асинхронная библиотека для написания тг ботов
@@ -112,14 +108,12 @@
 
 ## Команда
 
----
 
 - [Сальников Кирилл](https://vk.com/k.salnikov2020) - разработчик
 - [Атрошенко Богдан](https://vk.com/bog_at_04) - разработчик
 
 ## Архитектура
 
----
 
 ### Логика работы администратор
 <img src="https://github.com/Raisin228/order_telegram_bot/blob/main/architectures/%D0%B0%D1%80%D1%85%D0%B8%D1%82%D0%B5%D0%BA%D1%82%D1%83%D1%80%D0%B0_%D0%B0%D0%B4%D0%BC%D0%B8%D0%BD.png">
@@ -130,7 +124,6 @@
 
 ## Фото проекта
 
----
 
 ### Начало работы
 <img src="https://github.com/Raisin228/order_telegram_bot/blob/main/bot_scrins/start_work.png">
